@@ -31,3 +31,29 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+logs/
+
+# macOS
+.DS_Store
+
+# Linux
+*~
+
+# Temporary files
+tmp/
+temp/
+
+# Docker volumes (if local)
+docker/postgres/data/
+
+# Coverage
+coverage/
+
+# Generated reports
+reports/
