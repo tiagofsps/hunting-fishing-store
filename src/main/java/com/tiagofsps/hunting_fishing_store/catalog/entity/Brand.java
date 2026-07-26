@@ -22,7 +22,7 @@ public class Brand extends BaseEntity {
     @Column(nullable = false, unique = true, length = 100)
     private String slug;
 
-    @Column(length = 2048)
+    @Column(length = 500)
     private String logoUrl;
 
 }

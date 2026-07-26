@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.tiagofsps.hunting_fishing_store.catalog.dto.request.BrandCreateRequest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.response.BrandResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,7 +28,7 @@ public class BrandController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public BrandResponse create(@RequestBody BrandCreateRequest request) {
+    public BrandResponse create(@Valid   @RequestBody BrandCreateRequest request) {
         return brandService.create(request);
     }
 }
