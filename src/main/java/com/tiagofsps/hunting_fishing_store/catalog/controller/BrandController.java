@@ -2,9 +2,10 @@ package com.tiagofsps.hunting_fishing_store.catalog.controller;
 
 import java.util.List;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.tiagofsps.hunting_fishing_store.catalog.dto.request.BrandCreateRequest;
+import com.tiagofsps.hunting_fishing_store.catalog.dto.response.BrandResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Brand;
 import com.tiagofsps.hunting_fishing_store.catalog.service.BrandService;
@@ -20,7 +21,13 @@ public class BrandController {
     }
 
     @GetMapping
-    public List<Brand> findAll() {
+    public List<BrandResponse> findAll() {
         return brandService.findAll();
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public BrandResponse create(@RequestBody BrandCreateRequest request) {
+        return brandService.create(request);
     }
 }

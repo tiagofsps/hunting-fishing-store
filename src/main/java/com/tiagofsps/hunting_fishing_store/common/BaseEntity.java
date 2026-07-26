@@ -2,6 +2,8 @@ package com.tiagofsps.hunting_fishing_store.common;
 
 import java.time.LocalDateTime;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -11,6 +13,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 
+@Getter
+@Setter
 @MappedSuperclass
 public abstract class BaseEntity {
 
