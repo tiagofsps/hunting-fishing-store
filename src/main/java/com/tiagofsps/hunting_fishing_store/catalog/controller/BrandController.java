@@ -26,6 +26,11 @@ public class BrandController {
         return brandService.findAll();
     }
 
+    @GetMapping("/{id}")
+    public BrandResponse findById(@PathVariable Long id) {
+        return brandService.findById(id);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public BrandResponse create(@Valid   @RequestBody BrandCreateRequest request) {

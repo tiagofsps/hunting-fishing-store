@@ -8,6 +8,8 @@ import com.tiagofsps.hunting_fishing_store.catalog.dto.request.BrandCreateReques
 import com.tiagofsps.hunting_fishing_store.catalog.dto.response.BrandResponse;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Brand;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.BrandRepository;
+import com.tiagofsps.hunting_fishing_store.common.exception.BrandAlreadyExistsException;
+import com.tiagofsps.hunting_fishing_store.common.exception.BrandNotFoundException;
 
 @Service
 public class BrandService {
@@ -17,18 +19,24 @@ public class BrandService {
     public BrandService(BrandRepository brandRepository) {
         this.brandRepository = brandRepository;
     }
+    
+    private BrandResponse toResponse(Brand brand) {
+        return new BrandResponse(brand.getId(), brand.getName(), brand.getSlug(), brand.getLogoUrl());
+    }
+
+    public BrandResponse findById(Long id) {
+        Brand brand = brandRepository.findById(id)
+                .orElseThrow(() -> new BrandNotFoundException(id));
+        return toResponse(brand);
+    }
 
     public List<BrandResponse> findAll() {
         return brandRepository.findAll().stream().map(this::toResponse).toList();
     }
 
-    private BrandResponse toResponse(Brand brand) {
-        return new BrandResponse(brand.getId(), brand.getName(), brand.getSlug(), brand.getLogoUrl());
-    }
-
     public BrandResponse create(BrandCreateRequest request) {
         if(brandRepository.existsBySlug(request.slug())) {
-            throw new IllegalArgumentException("Slug already exists");
+            throw new BrandAlreadyExistsException(request.slug());
         }
 
         Brand brand = new Brand();
