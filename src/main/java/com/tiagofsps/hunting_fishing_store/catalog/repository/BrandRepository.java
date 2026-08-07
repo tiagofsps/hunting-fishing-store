@@ -11,4 +11,6 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
   Optional<Brand> findBySlug(String slug);
 
   boolean existsBySlug(String slug);
+
+  boolean existsBySlugAndIdNot(String slug, Long id);
 }

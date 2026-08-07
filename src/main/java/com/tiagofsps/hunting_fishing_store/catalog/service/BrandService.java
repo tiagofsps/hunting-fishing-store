@@ -47,6 +47,29 @@ public class BrandService {
         Brand savedBrand = brandRepository.save(brand);
 
         return new BrandResponse(savedBrand.getId(), savedBrand.getName(), savedBrand.getSlug(), savedBrand.getLogoUrl());
-    } 
+    }
+
+    public BrandResponse update(Long id, BrandCreateRequest request) {
+        if(brandRepository.existsBySlugAndIdNot(request.slug(), id)) {
+            throw new BrandAlreadyExistsException(request.slug());
+        }
+
+        Brand brand = brandRepository.findById(id)
+                .orElseThrow(() -> new BrandNotFoundException(id));
+
+        brand.setName(request.name());
+        brand.setSlug(request.slug());
+        brand.setLogoUrl(request.logoUrl());
+
+        Brand updatedBrand = brandRepository.save(brand);
+
+        return new BrandResponse(updatedBrand.getId(), updatedBrand.getName(), updatedBrand.getSlug(), updatedBrand.getLogoUrl());
+    }
+    
+    public void delete(Long id) {
+        Brand brand = brandRepository.findById(id)
+                .orElseThrow(() -> new BrandNotFoundException(id));
+        brandRepository.delete(brand);
+    }
 
 }

@@ -9,6 +9,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import com.tiagofsps.hunting_fishing_store.catalog.service.BrandService;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
 
 @RestController
 @RequestMapping("/api/v1/brands")
@@ -35,4 +38,17 @@ public class BrandController {
     public BrandResponse create(@Valid   @RequestBody BrandCreateRequest request) {
         return brandService.create(request);
     }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        brandService.delete(id);
+    }
+
+    @PutMapping("/{id}")
+    public BrandResponse update(@PathVariable Long id, @Valid @RequestBody BrandCreateRequest request) {
+        BrandResponse entity = brandService.update(id, request);        
+        return entity;
+    }
+    
 }
