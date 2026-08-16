@@ -65,6 +65,18 @@ class CategoryServiceTest {
     }
 
     @Test
+    @DisplayName("Should return all categories")
+    void shouldReturnAllCategories() {
+        when(categoryRepository.findAll()).thenReturn(List.of(category));
+
+        List<CategoryResponse> result = categoryService.findAll();
+
+        assertEquals(1, result.size());
+        assertEquals("Fishing", result.getFirst().name());
+        verify(categoryRepository).findAll();
+    }
+
+    @Test
     @DisplayName("Should create category")
     void shouldCreateCategory() {
         CategoryCreateRequest request = new CategoryCreateRequest("Fishing", "fishing", "Fishing gear", null);
@@ -76,6 +88,16 @@ class CategoryServiceTest {
         assertEquals("Fishing", response.name());
         verify(categoryRepository).existsBySlug("fishing");
         verify(categoryRepository).save(any(Category.class));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when creating duplicated slug")
+    void shouldThrowWhenCreatingDuplicatedSlug() {
+        CategoryCreateRequest request = new CategoryCreateRequest("Fishing", "fishing", "Desc", null);
+        when(categoryRepository.existsBySlug("fishing")).thenReturn(true);
+
+        assertThrows(CategoryAlreadyExistsException.class, () -> categoryService.create(request));
+        verify(categoryRepository, never()).save(any());
     }
 
     @Test
@@ -97,6 +119,31 @@ class CategoryServiceTest {
     }
 
     @Test
+    @DisplayName("Should update existing category")
+    void shouldUpdateCategory() {
+        CategoryCreateRequest request = new CategoryCreateRequest("Updated", "updated", "New desc", null);
+        
+        when(categoryRepository.existsBySlugAndIdNot("updated", 1L)).thenReturn(false);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(categoryRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        CategoryResponse response = categoryService.update(1L, request);
+
+        assertEquals("Updated", response.name());
+        assertEquals("updated", response.slug());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when updating non-existent category")
+    void shouldThrowWhenUpdatingNonExistent() {
+        CategoryCreateRequest request = new CategoryCreateRequest("Updated", "updated", "New desc", null);
+        when(categoryRepository.existsBySlugAndIdNot("updated", 1L)).thenReturn(false);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(CategoryNotFoundException.class, () -> categoryService.update(1L, request));
+    }
+
+    @Test
     @DisplayName("Should delete category")
     void shouldDeleteCategory() {
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
@@ -104,5 +151,14 @@ class CategoryServiceTest {
         categoryService.delete(1L);
 
         verify(categoryRepository).delete(category);
+    }
+
+    @Test
+    @DisplayName("Should throw when deleting non-existent category")
+    void shouldThrowWhenDeletingNonExistent() {
+        when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(CategoryNotFoundException.class, () -> categoryService.delete(1L));
+        verify(categoryRepository, never()).delete(any());
     }
 }

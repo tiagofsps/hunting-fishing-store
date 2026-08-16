@@ -109,4 +109,46 @@ class CategoryControllerTest {
 
         verify(categoryService).delete(1L);
     }
+
+    @Test
+    void shouldReturnNotFoundWhenCategoryDoesNotExist() throws Exception {
+        when(categoryService.findById(1L)).thenThrow(new CategoryNotFoundException(1L));
+
+        mockMvc.perform(get("/api/v1/categories/1"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldReturnConflictWhenCategoryAlreadyExists() throws Exception {
+        when(categoryService.create(any())).thenThrow(new CategoryAlreadyExistsException("fishing"));
+
+        String request = """
+                {
+                    "name": "Fishing",
+                    "slug": "fishing"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/categories")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenInputIsInvalid() throws Exception {
+        String request = """
+                {
+                    "name": "",
+                    "slug": ""
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/categories")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(categoryService);
+    }
 }
