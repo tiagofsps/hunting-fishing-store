@@ -51,4 +51,17 @@ class UserRepositoryTest {
         assertTrue(result.isPresent());
         assertEquals("John", result.get().getFirstName());
     }
+
+    @Test
+    void shouldCheckIfEmailExists() {
+        User user = new User();
+        user.setEmail("exists@example.com");
+        user.setPassword("pass");
+        user.setFirstName("F");
+        user.setLastName("L");
+        userRepository.save(user);
+
+        assertTrue(userRepository.existsByEmail("exists@example.com"));
+        assertFalse(userRepository.existsByEmail("other@example.com"));
+    }
 }

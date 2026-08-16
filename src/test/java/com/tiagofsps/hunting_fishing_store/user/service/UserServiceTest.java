@@ -2,8 +2,10 @@ package com.tiagofsps.hunting_fishing_store.user.service;
 
 import com.tiagofsps.hunting_fishing_store.common.exception.UserAlreadyExistsException;
 import com.tiagofsps.hunting_fishing_store.common.exception.UserNotFoundException;
+import com.tiagofsps.hunting_fishing_store.user.dto.request.AddressRequest;
 import com.tiagofsps.hunting_fishing_store.user.dto.request.UserRegistrationRequest;
 import com.tiagofsps.hunting_fishing_store.user.dto.response.UserResponse;
+import com.tiagofsps.hunting_fishing_store.user.entity.AddressType;
 import com.tiagofsps.hunting_fishing_store.user.entity.User;
 import com.tiagofsps.hunting_fishing_store.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,6 +85,47 @@ class UserServiceTest {
         UserResponse response = userService.findById(1L);
 
         assertEquals(1L, response.id());
+    }
+
+    @Test
+    @DisplayName("Should find user by email")
+    void shouldFindUserByEmail() {
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+
+        UserResponse response = userService.findByEmail("test@example.com");
+
+        assertEquals("test@example.com", response.email());
+    }
+
+    @Test
+    @DisplayName("Should throw when email not found")
+    void shouldThrowWhenEmailNotFound() {
+        when(userRepository.findByEmail("any@example.com")).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () -> userService.findByEmail("any@example.com"));
+    }
+
+    @Test
+    @DisplayName("Should add address to user")
+    void shouldAddAddress() {
+        AddressRequest request = new AddressRequest("John", "123", "Street", "City", "123", "PT", AddressType.SHIPPING);
+        
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(user);
+
+        UserResponse response = userService.addAddress(1L, request);
+
+        assertEquals(1, response.addresses().size());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    @DisplayName("Should throw when user not found during add address")
+    void shouldThrowWhenUserNotFoundAddingAddress() {
+        AddressRequest request = new AddressRequest("John", "123", "Street", "City", "123", "PT", AddressType.SHIPPING);
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () -> userService.addAddress(1L, request));
     }
 
     @Test

@@ -3,6 +3,8 @@ package com.tiagofsps.hunting_fishing_store.user.controller;
 import com.tiagofsps.hunting_fishing_store.user.dto.request.UserRegistrationRequest;
 import com.tiagofsps.hunting_fishing_store.user.dto.response.UserResponse;
 import com.tiagofsps.hunting_fishing_store.user.service.UserService;
+import com.tiagofsps.hunting_fishing_store.common.exception.UserAlreadyExistsException;
+import com.tiagofsps.hunting_fishing_store.common.exception.UserNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -58,5 +60,32 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.email").value("test@example.com"));
+    }
+
+    @Test
+    void shouldReturnConflictWhenUserExists() throws Exception {
+        when(userService.register(any())).thenThrow(new UserAlreadyExistsException("test@example.com"));
+
+        String request = """
+                {
+                    "email": "test@example.com",
+                    "password": "password123",
+                    "firstName": "John",
+                    "lastName": "Doe"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/users/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenUserDoesNotExist() throws Exception {
+        when(userService.findById(1L)).thenThrow(new UserNotFoundException(1L));
+
+        mockMvc.perform(get("/api/v1/users/1"))
+                .andExpect(status().isNotFound());
     }
 }
