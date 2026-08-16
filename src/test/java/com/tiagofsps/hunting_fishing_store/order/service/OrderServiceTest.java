@@ -5,6 +5,8 @@ import com.tiagofsps.hunting_fishing_store.cart.entity.CartItem;
 import com.tiagofsps.hunting_fishing_store.cart.repository.CartRepository;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Product;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.ProductItem;
+import com.tiagofsps.hunting_fishing_store.catalog.service.StockMovementService;
+import com.tiagofsps.hunting_fishing_store.coupon.service.CouponService;
 import com.tiagofsps.hunting_fishing_store.order.dto.request.CheckoutRequest;
 import com.tiagofsps.hunting_fishing_store.order.dto.response.OrderResponse;
 import com.tiagofsps.hunting_fishing_store.order.entity.Order;
@@ -40,6 +42,12 @@ class OrderServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private CouponService couponService;
+
+    @Mock
+    private StockMovementService stockMovementService;
 
     @InjectMocks
     private OrderService orderService;
@@ -95,5 +103,6 @@ class OrderServiceTest {
         assertTrue(cart.getItems().isEmpty());
         verify(orderRepository).save(any(Order.class));
         verify(cartRepository).save(cart);
+        verify(stockMovementService, times(1)).recordMovement(any());
     }
 }
