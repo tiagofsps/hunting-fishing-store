@@ -34,6 +34,9 @@ public class Order extends BaseEntity {
     private BigDecimal totalAmount;
 
     @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal shippingCost = BigDecimal.ZERO;
 
     @ManyToOne(fetch = FetchType.LAZY)

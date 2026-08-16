@@ -6,6 +6,8 @@ import com.tiagofsps.hunting_fishing_store.cart.repository.CartRepository;
 import com.tiagofsps.hunting_fishing_store.common.exception.CartNotFoundException;
 import com.tiagofsps.hunting_fishing_store.common.exception.OrderNotFoundException;
 import com.tiagofsps.hunting_fishing_store.common.exception.UserNotFoundException;
+import com.tiagofsps.hunting_fishing_store.coupon.entity.Coupon;
+import com.tiagofsps.hunting_fishing_store.coupon.service.CouponService;
 import com.tiagofsps.hunting_fishing_store.order.dto.request.CheckoutRequest;
 import com.tiagofsps.hunting_fishing_store.order.dto.response.OrderItemResponse;
 import com.tiagofsps.hunting_fishing_store.order.dto.response.OrderResponse;
@@ -30,11 +32,16 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
+    private final CouponService couponService;
 
-    public OrderService(OrderRepository orderRepository, CartRepository cartRepository, UserRepository userRepository) {
+    public OrderService(OrderRepository orderRepository, 
+                        CartRepository cartRepository, 
+                        UserRepository userRepository, 
+                        CouponService couponService) {
         this.orderRepository = orderRepository;
         this.cartRepository = cartRepository;
         this.userRepository = userRepository;
+        this.couponService = couponService;
     }
 
     private OrderResponse toResponse(Order order) {
@@ -104,9 +111,21 @@ public class OrderService {
             totalAmount = totalAmount.add(orderItem.getUnitPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())));
         }
 
-        order.setTotalAmount(totalAmount);
+        Coupon appliedCoupon = null;
+        if (request.couponCode() != null && !request.couponCode().isBlank()) {
+            appliedCoupon = couponService.validateAndGet(request.couponCode(), userId, totalAmount);
+            BigDecimal discount = couponService.calculateDiscount(appliedCoupon, totalAmount);
+            order.setDiscountAmount(discount);
+            totalAmount = totalAmount.subtract(discount);
+        }
+
+        order.setTotalAmount(totalAmount.max(BigDecimal.ZERO));
 
         Order savedOrder = orderRepository.save(order);
+
+        if (appliedCoupon != null) {
+            couponService.recordUsage(appliedCoupon, user, savedOrder);
+        }
 
         // Clear cart
         cart.getItems().clear();

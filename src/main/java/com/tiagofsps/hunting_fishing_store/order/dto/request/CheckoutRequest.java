@@ -7,6 +7,8 @@ public record CheckoutRequest(
         Long shippingAddressId,
 
         @NotNull
-        Long billingAddressId
+        Long billingAddressId,
+
+        String couponCode
 ) {
 }
