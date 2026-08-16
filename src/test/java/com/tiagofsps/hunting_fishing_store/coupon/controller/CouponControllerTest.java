@@ -3,6 +3,7 @@ package com.tiagofsps.hunting_fishing_store.coupon.controller;
 import com.tiagofsps.hunting_fishing_store.coupon.dto.request.CouponRequest;
 import com.tiagofsps.hunting_fishing_store.coupon.dto.response.CouponResponse;
 import com.tiagofsps.hunting_fishing_store.coupon.service.CouponService;
+import com.tiagofsps.hunting_fishing_store.common.exception.CouponNotFoundException;
 import com.tiagofsps.hunting_fishing_store.promotion.entity.DiscountType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,5 +62,13 @@ class CouponControllerTest {
         mockMvc.perform(get("/api/v1/coupons"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].code").value("SAVE20"));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenCouponDoesNotExist() throws Exception {
+        when(couponService.findById(1L)).thenThrow(new CouponNotFoundException(1L));
+
+        mockMvc.perform(get("/api/v1/coupons/1"))
+                .andExpect(status().isNotFound());
     }
 }
