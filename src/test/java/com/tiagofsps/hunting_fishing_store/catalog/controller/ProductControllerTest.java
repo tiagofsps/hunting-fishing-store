@@ -22,6 +22,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.request.ProductCreateRequest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.response.ProductResponse;
 import com.tiagofsps.hunting_fishing_store.catalog.service.ProductService;
+import com.tiagofsps.hunting_fishing_store.common.exception.ProductAlreadyExistsException;
+import com.tiagofsps.hunting_fishing_store.common.exception.ProductNotFoundException;
 
 @WebMvcTest(ProductController.class)
 class ProductControllerTest {
@@ -105,5 +107,32 @@ class ProductControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(productService).delete(1L);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenProductDoesNotExist() throws Exception {
+        when(productService.findById(1L)).thenThrow(new ProductNotFoundException(1L));
+
+        mockMvc.perform(get("/api/v1/products/1"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldReturnConflictWhenProductAlreadyExists() throws Exception {
+        when(productService.create(any())).thenThrow(new ProductAlreadyExistsException("rod"));
+
+        String request = """
+                {
+                    "name": "Rod",
+                    "slug": "rod",
+                    "categoryId": 1,
+                    "brandId": 1
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isConflict());
     }
 }

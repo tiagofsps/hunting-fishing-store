@@ -26,6 +26,9 @@ import com.tiagofsps.hunting_fishing_store.catalog.entity.Category;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.ProductRepository;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.BrandRepository;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.CategoryRepository;
+import com.tiagofsps.hunting_fishing_store.common.exception.BrandNotFoundException;
+import com.tiagofsps.hunting_fishing_store.common.exception.CategoryNotFoundException;
+import com.tiagofsps.hunting_fishing_store.common.exception.ProductAlreadyExistsException;
 import com.tiagofsps.hunting_fishing_store.common.exception.ProductNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
@@ -80,6 +83,25 @@ class ProductServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw when product not found")
+    void shouldThrowWhenNotFound() {
+        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ProductNotFoundException.class, () -> productService.findById(1L));
+    }
+
+    @Test
+    @DisplayName("Should return all products")
+    void shouldReturnAllProducts() {
+        when(productRepository.findAll()).thenReturn(List.of(product));
+
+        List<ProductResponse> result = productService.findAll();
+
+        assertEquals(1, result.size());
+        assertEquals("Fishing Rod", result.getFirst().name());
+    }
+
+    @Test
     @DisplayName("Should create product with items")
     void shouldCreateProductWithItems() {
         ProductItemRequest itemReq = new ProductItemRequest("SKU001", new BigDecimal("100.00"), 10, 0.5, true, null);
@@ -102,6 +124,42 @@ class ProductServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw when creating duplicated slug")
+    void shouldThrowWhenCreatingDuplicatedSlug() {
+        ProductCreateRequest request = new ProductCreateRequest("Fishing Rod", "fishing-rod", "Desc", false, 1L, 1L, List.of(), null);
+        when(productRepository.existsBySlug("fishing-rod")).thenReturn(true);
+
+        assertThrows(ProductAlreadyExistsException.class, () -> productService.create(request));
+    }
+
+    @Test
+    @DisplayName("Should throw when brand not found during create")
+    void shouldThrowWhenBrandNotFound() {
+        ProductCreateRequest request = new ProductCreateRequest("Fishing Rod", "fishing-rod", "Desc", false, 1L, 1L, List.of(), null);
+        when(productRepository.existsBySlug("fishing-rod")).thenReturn(false);
+        when(brandRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(BrandNotFoundException.class, () -> productService.create(request));
+    }
+
+    @Test
+    @DisplayName("Should update existing product")
+    void shouldUpdateProduct() {
+        ProductCreateRequest request = new ProductCreateRequest("Updated", "updated", "Desc", false, 1L, 1L, List.of(), null);
+        
+        when(productRepository.existsBySlugAndIdNot("updated", 1L)).thenReturn(false);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(brandRepository.findById(1L)).thenReturn(Optional.of(brand));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(productRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        ProductResponse response = productService.update(1L, request);
+
+        assertEquals("Updated", response.name());
+        assertEquals("updated", response.slug());
+    }
+
+    @Test
     @DisplayName("Should delete product")
     void shouldDeleteProduct() {
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
@@ -109,5 +167,13 @@ class ProductServiceTest {
         productService.delete(1L);
 
         verify(productRepository).delete(product);
+    }
+
+    @Test
+    @DisplayName("Should throw when deleting non-existent product")
+    void shouldThrowWhenDeletingNonExistent() {
+        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ProductNotFoundException.class, () -> productService.delete(1L));
     }
 }
