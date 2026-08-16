@@ -78,7 +78,7 @@ class OrderServiceTest {
     @Test
     @DisplayName("Should checkout cart and create order")
     void shouldCheckoutCart() {
-        CheckoutRequest request = new CheckoutRequest(1L, 1L);
+        CheckoutRequest request = new CheckoutRequest(1L, 1L, null);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
