@@ -4,6 +4,7 @@ import com.tiagofsps.hunting_fishing_store.promotion.dto.request.PromotionReques
 import com.tiagofsps.hunting_fishing_store.promotion.dto.response.PromotionResponse;
 import com.tiagofsps.hunting_fishing_store.promotion.entity.DiscountType;
 import com.tiagofsps.hunting_fishing_store.promotion.service.PromotionService;
+import com.tiagofsps.hunting_fishing_store.common.exception.PromotionNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -16,10 +17,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -34,12 +33,13 @@ class PromotionControllerTest {
 
     @Test
     void shouldReturnAllPromotions() throws Exception {
-        PromotionResponse response = new PromotionResponse(1L, "Sale", DiscountType.PERCENTAGE, BigDecimal.valueOf(10), 0, true, LocalDateTime.now(), LocalDateTime.now().plusDays(1), true, List.of());
-        when(promotionService.findAll()).thenReturn(List.of(response));
+        PromotionResponse r1 = new PromotionResponse(1L, "S1", DiscountType.PERCENTAGE, BigDecimal.TEN, 0, true, LocalDateTime.now(), LocalDateTime.now().plusDays(1), true, List.of());
+        PromotionResponse r2 = new PromotionResponse(2L, "S2", DiscountType.FIXED_AMOUNT, BigDecimal.TEN, 0, true, LocalDateTime.now(), LocalDateTime.now().plusDays(1), true, List.of());
+        when(promotionService.findAll()).thenReturn(List.of(r1, r2));
 
         mockMvc.perform(get("/api/v1/promotions"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Sale"));
+                .andExpect(jsonPath("$.length()").value(2));
 
         verify(promotionService).findAll();
     }
@@ -64,5 +64,37 @@ class PromotionControllerTest {
                         .content(request))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Sale"));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenMandatoryFieldsMissing() throws Exception {
+        String request = """
+                {
+                    "name": ""
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/promotions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(promotionService);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenPromotionDoesNotExist() throws Exception {
+        when(promotionService.findById(1L)).thenThrow(new PromotionNotFoundException(1L));
+
+        mockMvc.perform(get("/api/v1/promotions/1"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldDeletePromotion() throws Exception {
+        mockMvc.perform(delete("/api/v1/promotions/1"))
+                .andExpect(status().isNoContent());
+
+        verify(promotionService).delete(1L);
     }
 }

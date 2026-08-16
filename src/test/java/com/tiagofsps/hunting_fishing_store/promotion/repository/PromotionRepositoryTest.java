@@ -43,4 +43,30 @@ class PromotionRepositoryTest {
         assertFalse(active.isEmpty());
         assertEquals("Active Sale", active.get(0).getName());
     }
+
+    @Test
+    void shouldFindActivePromotionsOrderedByPriority() {
+        Promotion p1 = new Promotion();
+        p1.setName("Low Priority");
+        p1.setDiscountType(DiscountType.PERCENTAGE);
+        p1.setDiscountValue(BigDecimal.valueOf(10));
+        p1.setValidFrom(LocalDateTime.now().minusDays(1));
+        p1.setValidTo(LocalDateTime.now().plusDays(1));
+        p1.setPriority(1);
+        promotionRepository.save(p1);
+
+        Promotion p2 = new Promotion();
+        p2.setName("High Priority");
+        p2.setDiscountType(DiscountType.PERCENTAGE);
+        p2.setDiscountValue(BigDecimal.valueOf(20));
+        p2.setValidFrom(LocalDateTime.now().minusDays(1));
+        p2.setValidTo(LocalDateTime.now().plusDays(1));
+        p2.setPriority(10);
+        promotionRepository.save(p2);
+
+        List<Promotion> active = promotionRepository.findActivePromotions(LocalDateTime.now());
+
+        assertEquals(2, active.size());
+        assertEquals("High Priority", active.get(0).getName());
+    }
 }
