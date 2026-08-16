@@ -6,6 +6,10 @@ import com.tiagofsps.hunting_fishing_store.order.repository.OrderRepository;
 import com.tiagofsps.hunting_fishing_store.payment.entity.Payment;
 import com.tiagofsps.hunting_fishing_store.payment.entity.PaymentStatus;
 import com.tiagofsps.hunting_fishing_store.payment.repository.PaymentRepository;
+import com.tiagofsps.hunting_fishing_store.common.exception.PaymentNotFoundException;
+import com.tiagofsps.hunting_fishing_store.payment.dto.request.PaymentRequest;
+import com.tiagofsps.hunting_fishing_store.payment.dto.response.PaymentResponse;
+import com.tiagofsps.hunting_fishing_store.payment.entity.PaymentMethod;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,7 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -51,5 +55,34 @@ class PaymentServiceTest {
         assertEquals(PaymentStatus.COMPLETED, payment.getStatus());
         assertEquals(OrderStatus.PAID, order.getStatus());
         verify(orderRepository).save(order);
+    }
+
+    @Test
+    @DisplayName("Should initiate a new payment")
+    void shouldInitiatePayment() {
+        Order order = new Order();
+        order.setId(1L);
+        PaymentRequest request = new PaymentRequest(1L, PaymentMethod.MBWAY, java.math.BigDecimal.valueOf(50.0));
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(i -> {
+            Payment p = i.getArgument(0);
+            p.setId(1L);
+            return p;
+        });
+
+        PaymentResponse response = paymentService.initiatePayment(request);
+
+        assertEquals(1L, response.orderId());
+        assertEquals(PaymentStatus.PENDING, response.status());
+        assertNotNull(response.transactionId());
+    }
+
+    @Test
+    @DisplayName("Should throw when payment not found")
+    void shouldThrowWhenNotFound() {
+        when(paymentRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(PaymentNotFoundException.class, () -> paymentService.findById(1L));
     }
 }

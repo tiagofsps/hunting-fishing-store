@@ -5,6 +5,7 @@ import com.tiagofsps.hunting_fishing_store.payment.dto.response.PaymentResponse;
 import com.tiagofsps.hunting_fishing_store.payment.entity.PaymentMethod;
 import com.tiagofsps.hunting_fishing_store.payment.entity.PaymentStatus;
 import com.tiagofsps.hunting_fishing_store.payment.service.PaymentService;
+import com.tiagofsps.hunting_fishing_store.common.exception.PaymentNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -16,7 +17,7 @@ import java.math.BigDecimal;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -47,5 +48,20 @@ class PaymentControllerTest {
                         .content(request))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.transactionId").value("tx-123"));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenPaymentDoesNotExist() throws Exception {
+        when(paymentService.findById(1L)).thenThrow(new PaymentNotFoundException(1L));
+
+        mockMvc.perform(get("/api/v1/payments/1"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldUpdateStatus() throws Exception {
+        mockMvc.perform(patch("/api/v1/payments/1/status")
+                        .param("status", "COMPLETED"))
+                .andExpect(status().isOk());
     }
 }
