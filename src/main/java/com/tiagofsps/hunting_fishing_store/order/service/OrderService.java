@@ -3,6 +3,9 @@ package com.tiagofsps.hunting_fishing_store.order.service;
 import com.tiagofsps.hunting_fishing_store.cart.entity.Cart;
 import com.tiagofsps.hunting_fishing_store.cart.entity.CartItem;
 import com.tiagofsps.hunting_fishing_store.cart.repository.CartRepository;
+import com.tiagofsps.hunting_fishing_store.catalog.dto.request.StockMovementRequest;
+import com.tiagofsps.hunting_fishing_store.catalog.entity.MovementType;
+import com.tiagofsps.hunting_fishing_store.catalog.service.StockMovementService;
 import com.tiagofsps.hunting_fishing_store.common.exception.CartNotFoundException;
 import com.tiagofsps.hunting_fishing_store.common.exception.OrderNotFoundException;
 import com.tiagofsps.hunting_fishing_store.common.exception.UserNotFoundException;
@@ -33,15 +36,18 @@ public class OrderService {
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
     private final CouponService couponService;
+    private final StockMovementService stockMovementService;
 
     public OrderService(OrderRepository orderRepository, 
                         CartRepository cartRepository, 
                         UserRepository userRepository, 
-                        CouponService couponService) {
+                        CouponService couponService,
+                        StockMovementService stockMovementService) {
         this.orderRepository = orderRepository;
         this.cartRepository = cartRepository;
         this.userRepository = userRepository;
         this.couponService = couponService;
+        this.stockMovementService = stockMovementService;
     }
 
     private OrderResponse toResponse(Order order) {
@@ -122,6 +128,17 @@ public class OrderService {
         order.setTotalAmount(totalAmount.max(BigDecimal.ZERO));
 
         Order savedOrder = orderRepository.save(order);
+
+        // Record stock movements
+        for (OrderItem item : savedOrder.getItems()) {
+            stockMovementService.recordMovement(new StockMovementRequest(
+                    item.getProductItem().getId(),
+                    -item.getQuantity(),
+                    MovementType.SALE,
+                    "Order " + savedOrder.getOrderNumber(),
+                    userId
+            ));
+        }
 
         if (appliedCoupon != null) {
             couponService.recordUsage(appliedCoupon, user, savedOrder);

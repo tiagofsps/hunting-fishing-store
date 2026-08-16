@@ -3,6 +3,7 @@ package com.tiagofsps.hunting_fishing_store.catalog.entity;
 import com.tiagofsps.hunting_fishing_store.common.BaseEntity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
@@ -25,6 +26,7 @@ public class ProductItem extends BaseEntity {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal price;
 
+    @PositiveOrZero
     @Column(nullable = false)
     private Integer stockQuantity;
 
