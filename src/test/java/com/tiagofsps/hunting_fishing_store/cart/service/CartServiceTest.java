@@ -8,7 +8,9 @@ import com.tiagofsps.hunting_fishing_store.cart.repository.CartRepository;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Product;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.ProductItem;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.ProductItemRepository;
+import com.tiagofsps.hunting_fishing_store.common.exception.CartNotFoundException;
 import com.tiagofsps.hunting_fishing_store.common.exception.InsufficientStockException;
+import com.tiagofsps.hunting_fishing_store.common.exception.ProductNotFoundException;
 import com.tiagofsps.hunting_fishing_store.user.entity.User;
 import com.tiagofsps.hunting_fishing_store.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -96,6 +98,19 @@ class CartServiceTest {
     }
 
     @Test
+    @DisplayName("Should return cart and create it if not exists")
+    void shouldGetCartLazyCreation() {
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.empty());
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(cartRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        CartResponse response = cartService.getCart(1L);
+
+        assertEquals(1L, response.userId());
+        verify(cartRepository).save(any());
+    }
+
+    @Test
     @DisplayName("Should update quantity of existing item")
     void shouldUpdateQuantityOfExistingItem() {
         CartItem existingItem = new CartItem();
@@ -113,5 +128,61 @@ class CartServiceTest {
 
         assertEquals(1, response.items().size());
         assertEquals(5, response.items().getFirst().quantity());
+    }
+
+    @Test
+    @DisplayName("Should update quantity directly")
+    void shouldUpdateQuantityDirectly() {
+        CartItem existingItem = new CartItem();
+        existingItem.setProductItem(productItem);
+        existingItem.setQuantity(2);
+        cart.getItems().add(existingItem);
+
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+        when(cartRepository.save(any())).thenReturn(cart);
+
+        CartResponse response = cartService.updateQuantity(1L, 1L, 8);
+
+        assertEquals(8, response.items().getFirst().quantity());
+    }
+
+    @Test
+    @DisplayName("Should throw when updating quantity with insufficient stock")
+    void shouldThrowWhenUpdateQuantityInsufficientStock() {
+        CartItem existingItem = new CartItem();
+        existingItem.setProductItem(productItem);
+        existingItem.setQuantity(2);
+        cart.getItems().add(existingItem);
+
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+
+        assertThrows(InsufficientStockException.class, () -> cartService.updateQuantity(1L, 1L, 50));
+    }
+
+    @Test
+    @DisplayName("Should remove item from cart")
+    void shouldRemoveFromCart() {
+        CartItem existingItem = new CartItem();
+        existingItem.setProductItem(productItem);
+        existingItem.setQuantity(2);
+        cart.getItems().add(existingItem);
+
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+        when(cartRepository.save(any())).thenReturn(cart);
+
+        CartResponse response = cartService.removeFromCart(1L, 1L);
+
+        assertTrue(response.items().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should clear cart")
+    void shouldClearCart() {
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+
+        cartService.clearCart(1L);
+
+        assertTrue(cart.getItems().isEmpty());
+        verify(cartRepository).save(cart);
     }
 }
