@@ -1,7 +1,6 @@
 package com.tiagofsps.hunting_fishing_store.user.controller;
 
 import com.tiagofsps.hunting_fishing_store.user.dto.request.AddressRequest;
-import com.tiagofsps.hunting_fishing_store.user.dto.request.UserRegistrationRequest;
 import com.tiagofsps.hunting_fishing_store.user.dto.response.UserResponse;
 import com.tiagofsps.hunting_fishing_store.user.service.UserService;
 import jakarta.validation.Valid;
@@ -16,12 +15,6 @@ public class UserController {
 
     public UserController(UserService userService) {
         this.userService = userService;
-    }
-
-    @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse register(@Valid @RequestBody UserRegistrationRequest request) {
-        return userService.register(request);
     }
 
     @GetMapping("/{id}")

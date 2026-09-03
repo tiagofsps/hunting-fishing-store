@@ -14,3 +14,13 @@ spring:
 
   application:
     name: hunting-fishing-store
+
+  profiles:
+    active: dev
+
+app:
+  jwt:
+    secret: ${JWT_SECRET_KEY:local-development-secret-change-me-please}
+    expiration: ${JWT_EXPIRATION:15m}
+    refresh-expiration: ${JWT_REFRESH_EXPIRATION:7d}
+

@@ -52,7 +52,7 @@ The API base path is `/api/v1`.
 - `GET /stock-movements/item/{productItemId}` - List movements for a product item
 
 ### Users
-- `POST /users/register` - Register a new user
+- `POST /auth/register` - Create an account
 - `GET /users/{id}` - Get user profile
 - `POST /users/{id}/addresses` - Add an address to a user
 

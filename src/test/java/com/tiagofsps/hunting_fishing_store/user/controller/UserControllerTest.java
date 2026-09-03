@@ -1,23 +1,18 @@
 package com.tiagofsps.hunting_fishing_store.user.controller;
 
-import com.tiagofsps.hunting_fishing_store.user.dto.request.UserRegistrationRequest;
 import com.tiagofsps.hunting_fishing_store.user.dto.response.UserResponse;
 import com.tiagofsps.hunting_fishing_store.user.service.UserService;
-import com.tiagofsps.hunting_fishing_store.common.exception.UserAlreadyExistsException;
 import com.tiagofsps.hunting_fishing_store.common.exception.UserNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -31,27 +26,6 @@ class UserControllerTest {
     private UserService userService;
 
     @Test
-    void shouldRegisterUser() throws Exception {
-        UserResponse response = new UserResponse(1L, "test@example.com", "John", "Doe", null, null, null, true, List.of());
-        when(userService.register(any(UserRegistrationRequest.class))).thenReturn(response);
-
-        String request = """
-                {
-                    "email": "test@example.com",
-                    "password": "password123",
-                    "firstName": "John",
-                    "lastName": "Doe"
-                }
-                """;
-
-        mockMvc.perform(post("/api/v1/users/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(request))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value("test@example.com"));
-    }
-
-    @Test
     void shouldFindUserById() throws Exception {
         UserResponse response = new UserResponse(1L, "test@example.com", "John", "Doe", null, null, null, true, List.of());
         when(userService.findById(1L)).thenReturn(response);
@@ -60,25 +34,6 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.email").value("test@example.com"));
-    }
-
-    @Test
-    void shouldReturnConflictWhenUserExists() throws Exception {
-        when(userService.register(any())).thenThrow(new UserAlreadyExistsException("test@example.com"));
-
-        String request = """
-                {
-                    "email": "test@example.com",
-                    "password": "password123",
-                    "firstName": "John",
-                    "lastName": "Doe"
-                }
-                """;
-
-        mockMvc.perform(post("/api/v1/users/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(request))
-                .andExpect(status().isConflict());
     }
 
     @Test
