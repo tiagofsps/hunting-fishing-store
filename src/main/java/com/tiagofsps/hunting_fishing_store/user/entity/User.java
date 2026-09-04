@@ -37,6 +37,10 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private Boolean enabled = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.USER;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
 }

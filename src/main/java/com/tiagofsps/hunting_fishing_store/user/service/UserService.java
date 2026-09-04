@@ -7,6 +7,7 @@ import com.tiagofsps.hunting_fishing_store.user.dto.request.UserRegistrationRequ
 import com.tiagofsps.hunting_fishing_store.user.dto.response.AddressResponse;
 import com.tiagofsps.hunting_fishing_store.user.dto.response.UserResponse;
 import com.tiagofsps.hunting_fishing_store.user.entity.Address;
+import com.tiagofsps.hunting_fishing_store.user.entity.Role;
 import com.tiagofsps.hunting_fishing_store.user.entity.User;
 import com.tiagofsps.hunting_fishing_store.user.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -71,6 +72,7 @@ public class UserService {
         user.setPhone(request.phone());
         user.setHuntingLicenseNumber(request.huntingLicenseNumber());
         user.setFishingLicenseNumber(request.fishingLicenseNumber());
+        user.setRole(Role.USER); // Explicit USER role for all new registrations
 
         User savedUser = userRepository.save(user);
         return toUserResponse(savedUser);
