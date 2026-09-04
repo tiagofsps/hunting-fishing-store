@@ -1,24 +1,35 @@
 package com.tiagofsps.hunting_fishing_store.auth.controller;
 
-import com.tiagofsps.hunting_fishing_store.config.security.TokenService;
+import com.tiagofsps.hunting_fishing_store.auth.service.TokenService;
+import com.tiagofsps.hunting_fishing_store.config.security.CookieProvider;
 import com.tiagofsps.hunting_fishing_store.user.dto.request.UserRegistrationRequest;
 import com.tiagofsps.hunting_fishing_store.user.dto.response.UserResponse;
 import com.tiagofsps.hunting_fishing_store.user.service.UserService;
-import java.util.List;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Collections;
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AuthController.class)
 class AuthControllerTest {
@@ -41,6 +52,9 @@ class AuthControllerTest {
     @MockitoBean
     private org.springframework.security.core.userdetails.UserDetailsService userDetailsService;
 
+    @MockitoBean
+    private CookieProvider cookieProvider;
+
     @Test
     void shouldCreateAccount() throws Exception {
         UserResponse response = new UserResponse(1L, "test@example.com", "John", "Doe", null, null, null, true, List.of());
@@ -56,8 +70,119 @@ class AuthControllerTest {
     }
 
     @Test
-    void shouldLogout() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/logout"))
-                .andExpect(status().isNoContent());
+    void shouldLoginSuccessfully() throws Exception {
+        String email = "test@example.com";
+        String password = "password123";
+        String accessToken = "access-token";
+        String refreshToken = "refresh-token";
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                email, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+
+        when(authenticationManager.authenticate(any())).thenReturn(auth);
+        when(tokenService.generateAccessToken(eq(email), anyString())).thenReturn(accessToken);
+        when(tokenService.generateRefreshToken(email)).thenReturn(refreshToken);
+        when(cookieProvider.createRefreshTokenCookie(refreshToken)).thenReturn(
+                ResponseCookie.from("refresh_token", refreshToken).build());
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(String.format("{\"email\":\"%s\",\"password\":\"%s\"}", email, password)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value(accessToken))
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(header().exists("Set-Cookie"));
+    }
+
+    @Test
+    void shouldRefreshSuccessfully() throws Exception {
+        String email = "test@example.com";
+        String oldRefreshToken = "old-refresh-token";
+        String newAccessToken = "new-access-token";
+        String newRefreshToken = "new-refresh-token";
+        String tokenId = "token-123";
+
+        Jwt jwt = mock(Jwt.class);
+        when(jwt.getSubject()).thenReturn(email);
+        when(jwt.getId()).thenReturn(tokenId);
+        when(jwt.getClaimAsString("token_type")).thenReturn("refresh");
+
+        when(jwtDecoder.decode(oldRefreshToken)).thenReturn(jwt);
+        when(tokenService.validateRefreshToken(tokenId)).thenReturn(true);
+
+        UserDetails userDetails = new User(email, "", true, true, true, true,
+                List.of(new SimpleGrantedAuthority("ROLE_USER")));
+        when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
+
+        when(tokenService.generateAccessToken(eq(email), anyString())).thenReturn(newAccessToken);
+        when(tokenService.generateRefreshToken(email)).thenReturn(newRefreshToken);
+        when(cookieProvider.createRefreshTokenCookie(newRefreshToken)).thenReturn(
+                ResponseCookie.from("refresh_token", newRefreshToken).build());
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(new Cookie("refresh_token", oldRefreshToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value(newAccessToken))
+                .andExpect(header().exists("Set-Cookie"));
+
+        verify(tokenService).revokeRefreshToken(tokenId);
+    }
+
+    @Test
+    void shouldFailRefreshIfCookieMissing() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/refresh"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldFailRefreshIfTokenRevoked() throws Exception {
+        String oldRefreshToken = "revoked-token";
+        String tokenId = "revoked-id";
+
+        Jwt jwt = mock(Jwt.class);
+        when(jwt.getId()).thenReturn(tokenId);
+        when(jwt.getClaimAsString("token_type")).thenReturn("refresh");
+
+        when(jwtDecoder.decode(oldRefreshToken)).thenReturn(jwt);
+        when(tokenService.validateRefreshToken(tokenId)).thenReturn(false);
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(new Cookie("refresh_token", oldRefreshToken)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldLogoutSuccessfully() throws Exception {
+        String refreshToken = "some-token";
+        String tokenId = "token-id";
+
+        Jwt jwt = mock(Jwt.class);
+        when(jwt.getId()).thenReturn(tokenId);
+        when(jwt.getClaimAsString("token_type")).thenReturn("refresh");
+
+        when(jwtDecoder.decode(refreshToken)).thenReturn(jwt);
+        when(cookieProvider.createRefreshTokenClearCookie()).thenReturn(
+                ResponseCookie.from("refresh_token", "").maxAge(0).build());
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .cookie(new Cookie("refresh_token", refreshToken)))
+                .andExpect(status().isNoContent())
+                .andExpect(header().exists("Set-Cookie"));
+
+        verify(tokenService).revokeRefreshToken(tokenId);
+    }
+
+    @Test
+    void shouldLogoutEvenIfTokenInvalid() throws Exception {
+        String invalidToken = "invalid-token";
+
+        when(jwtDecoder.decode(invalidToken)).thenThrow(new BadCredentialsException("Invalid"));
+        when(cookieProvider.createRefreshTokenClearCookie()).thenReturn(
+                ResponseCookie.from("refresh_token", "").maxAge(0).build());
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .cookie(new Cookie("refresh_token", invalidToken)))
+                .andExpect(status().isNoContent())
+                .andExpect(header().exists("Set-Cookie"));
     }
 }
