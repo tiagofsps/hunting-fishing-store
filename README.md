@@ -52,9 +52,14 @@ The API base path is `/api/v1`.
 - `GET /stock-movements/item/{productItemId}` - List movements for a product item
 
 ### Users
-- `POST /auth/register` - Create an account
 - `GET /users/{id}` - Get user profile
 - `POST /users/{id}/addresses` - Add an address to a user
+
+### Authentication
+- `POST /auth/register` - Create an account
+- `POST /auth/login` - Authenticate and receive an access/refresh token pair
+- `POST /auth/refresh` - Issue a new token pair using a refresh token
+- `POST /auth/logout` - End the client session
 
 ### Shopping Cart
 - `GET /carts/{userId}` - Get user's cart
@@ -82,14 +87,73 @@ The API base path is `/api/v1`.
 - `GET /promotions/{id}` - Get promotion details
 - `DELETE /promotions/{id}` - Delete a promotion
 
-## Security
+## Authentication
 
-The project uses Spring Security for authentication and authorization.
+The project uses Spring Security OAuth2 Resource Server with Nimbus JWT for
+stateless authentication.
 
-### Current Configuration (Development)
-- **Permit All**: All API endpoints are currently accessible without authentication (`permitAll()`).
-- **CSRF**: Cross-Site Request Forgery protection is disabled.
-- **Password Encoding**: `BCryptPasswordEncoder` is configured for secure password storage.
+### Public endpoints
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/refresh`
+- `POST /api/v1/auth/logout`
+
+All other endpoints require a valid bearer access token:
+
+```http
+Authorization: Bearer <access-token>
+```
+
+### Login
+
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+	"email": "user@example.com",
+	"password": "password123"
+}
+```
+
+The response contains a short-lived `accessToken` and a longer-lived
+`refreshToken`.
+
+### Refresh
+
+```http
+POST /api/v1/auth/refresh
+Content-Type: application/json
+
+{
+	"refreshToken": "<refresh-token>"
+}
+```
+
+### Logout
+
+```http
+POST /api/v1/auth/logout
+```
+
+The API is stateless, so the client must discard both the access token and the
+refresh token after logout. Existing refresh tokens remain valid until they
+expire because refresh-token revocation is not persisted yet.
+
+### Configuration
+
+Configuration is kept in `src/main/resources/application.yml`. The JWT secret
+and token durations can be overridden with environment variables:
+
+```bash
+export JWT_SECRET_KEY="replace-with-a-long-random-secret"
+export JWT_EXPIRATION="15m"
+export JWT_REFRESH_EXPIRATION="7d"
+```
+
+Passwords are stored with `BCryptPasswordEncoder`. CSRF protection is disabled
+because the API is stateless and uses bearer tokens.
 
 ## Running the Project
 

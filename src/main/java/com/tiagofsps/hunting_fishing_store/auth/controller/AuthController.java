@@ -68,6 +68,11 @@ public class AuthController {
         return tokenResponse(username);
     }
 
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout() {
+    }
+
     private LoginResponse tokenResponse(String username) {
         return new LoginResponse(
                 tokenService.generateAccessToken(username),
