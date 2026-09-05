@@ -13,23 +13,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
+import com.tiagofsps.hunting_fishing_store.BaseControllerTest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.request.ProductCreateRequest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.response.ProductResponse;
 import com.tiagofsps.hunting_fishing_store.catalog.service.ProductService;
 import com.tiagofsps.hunting_fishing_store.common.exception.ProductAlreadyExistsException;
 import com.tiagofsps.hunting_fishing_store.common.exception.ProductNotFoundException;
 
-@WebMvcTest(ProductController.class)
-class ProductControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
+class ProductControllerTest extends BaseControllerTest {
 
     @MockitoBean
     private ProductService productService;
@@ -39,7 +33,7 @@ class ProductControllerTest {
         ProductResponse response = new ProductResponse(1L, "Fishing Rod", "fishing-rod", "Desc", false, 1L, 1L, List.of(), List.of());
         when(productService.findAll()).thenReturn(List.of(response));
 
-        mockMvc.perform(get("/api/v1/products"))
+        mockMvc.perform(get("/api/v1/products").with(adminJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Fishing Rod"));
 
@@ -51,7 +45,7 @@ class ProductControllerTest {
         ProductResponse response = new ProductResponse(1L, "Fishing Rod", "fishing-rod", "Desc", false, 1L, 1L, List.of(), List.of());
         when(productService.findById(1L)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/products/1"))
+        mockMvc.perform(get("/api/v1/products/1").with(adminJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Fishing Rod"));
@@ -73,7 +67,7 @@ class ProductControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/products")
+        mockMvc.perform(post("/api/v1/products").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())
@@ -94,7 +88,7 @@ class ProductControllerTest {
                 }
                 """;
 
-        mockMvc.perform(put("/api/v1/products/1")
+        mockMvc.perform(put("/api/v1/products/1").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isOk())
@@ -103,7 +97,7 @@ class ProductControllerTest {
 
     @Test
     void shouldDeleteProduct() throws Exception {
-        mockMvc.perform(delete("/api/v1/products/1"))
+        mockMvc.perform(delete("/api/v1/products/1").with(adminJwt()))
                 .andExpect(status().isNoContent());
 
         verify(productService).delete(1L);
@@ -113,7 +107,7 @@ class ProductControllerTest {
     void shouldReturnNotFoundWhenProductDoesNotExist() throws Exception {
         when(productService.findById(1L)).thenThrow(new ProductNotFoundException(1L));
 
-        mockMvc.perform(get("/api/v1/products/1"))
+        mockMvc.perform(get("/api/v1/products/1").with(adminJwt()))
                 .andExpect(status().isNotFound());
     }
 
@@ -130,7 +124,7 @@ class ProductControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/products")
+        mockMvc.perform(post("/api/v1/products").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isConflict());

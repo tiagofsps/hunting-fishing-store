@@ -1,20 +1,13 @@
 package com.tiagofsps.hunting_fishing_store.integration;
 
+import com.tiagofsps.hunting_fishing_store.BaseIntegrationTest;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.*;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.*;
 import com.tiagofsps.hunting_fishing_store.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 
@@ -24,17 +17,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Testcontainers
-@SpringBootTest
-@AutoConfigureMockMvc
-class StockMovementIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17");
-
-    @Autowired
-    private MockMvc mockMvc;
+class StockMovementIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private StockMovementRepository stockMovementRepository;
@@ -58,13 +41,6 @@ class StockMovementIntegrationTest {
 
     @BeforeEach
     void setup() {
-        stockMovementRepository.deleteAll();
-        productItemRepository.deleteAll();
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        brandRepository.deleteAll();
-        userRepository.deleteAll();
-
         Brand brand = new Brand();
         brand.setName("Shimano");
         brand.setSlug("shimano");
@@ -91,7 +67,6 @@ class StockMovementIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldRecordMovementAndAdjustStock() throws Exception {
         String request = """
                 {
@@ -103,6 +78,7 @@ class StockMovementIntegrationTest {
                 """.formatted(savedItem.getId());
 
         mockMvc.perform(post("/api/v1/stock-movements")
+                        .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())
@@ -114,7 +90,6 @@ class StockMovementIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldReturnBadRequestWhenInsufficientStock() throws Exception {
         String request = """
                 {
@@ -126,6 +101,7 @@ class StockMovementIntegrationTest {
                 """.formatted(savedItem.getId());
 
         mockMvc.perform(post("/api/v1/stock-movements")
+                        .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest());
@@ -135,7 +111,6 @@ class StockMovementIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldGetHistoryForItem() throws Exception {
         StockMovement movement = new StockMovement();
         movement.setProductItem(savedItem);
@@ -143,7 +118,8 @@ class StockMovementIntegrationTest {
         movement.setType(MovementType.PURCHASE);
         stockMovementRepository.save(movement);
 
-        mockMvc.perform(get("/api/v1/stock-movements/item/" + savedItem.getId()))
+        mockMvc.perform(get("/api/v1/stock-movements/item/" + savedItem.getId())
+                        .with(adminJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].quantity").value(2));

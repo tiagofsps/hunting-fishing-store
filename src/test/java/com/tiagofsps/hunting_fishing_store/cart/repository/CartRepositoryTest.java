@@ -1,28 +1,18 @@
 package com.tiagofsps.hunting_fishing_store.cart.repository;
 
+import com.tiagofsps.hunting_fishing_store.BaseRepositoryTest;
 import com.tiagofsps.hunting_fishing_store.cart.entity.Cart;
 import com.tiagofsps.hunting_fishing_store.user.entity.User;
 import com.tiagofsps.hunting_fishing_store.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Testcontainers
-@DataJpaTest
-class CartRepositoryTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17");
+class CartRepositoryTest extends BaseRepositoryTest {
 
     @Autowired
     private CartRepository cartRepository;

@@ -1,5 +1,6 @@
 package com.tiagofsps.hunting_fishing_store.integration;
 
+import com.tiagofsps.hunting_fishing_store.BaseIntegrationTest;
 import com.tiagofsps.hunting_fishing_store.cart.repository.CartRepository;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Brand;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Category;
@@ -14,15 +15,7 @@ import com.tiagofsps.hunting_fishing_store.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 
@@ -31,17 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Testcontainers
-@SpringBootTest
-@AutoConfigureMockMvc
-class CartIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17");
-
-    @Autowired
-    private MockMvc mockMvc;
+class CartIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -66,13 +49,6 @@ class CartIntegrationTest {
 
     @BeforeEach
     void setup() {
-        cartRepository.deleteAll();
-        productItemRepository.deleteAll();
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        brandRepository.deleteAll();
-        userRepository.deleteAll();
-
         User user = new User();
         user.setEmail("test@example.com");
         user.setPassword("pass");
@@ -106,7 +82,6 @@ class CartIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldAddItemToCartAndRetrieveIt() throws Exception {
         String addRequest = """
                 {
@@ -116,6 +91,7 @@ class CartIntegrationTest {
                 """.formatted(savedItem.getId());
 
         mockMvc.perform(post("/api/v1/carts/" + savedUser.getId() + "/items")
+                        .with(userJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(addRequest))
                 .andExpect(status().isCreated())
@@ -123,7 +99,8 @@ class CartIntegrationTest {
                 .andExpect(jsonPath("$.items[0].quantity").value(2))
                 .andExpect(jsonPath("$.totalAmount").value(200.0));
 
-        mockMvc.perform(get("/api/v1/carts/" + savedUser.getId()))
+        mockMvc.perform(get("/api/v1/carts/" + savedUser.getId())
+                        .with(userJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items.length()").value(1));
     }

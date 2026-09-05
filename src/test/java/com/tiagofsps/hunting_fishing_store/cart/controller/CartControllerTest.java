@@ -1,15 +1,13 @@
 package com.tiagofsps.hunting_fishing_store.cart.controller;
 
+import com.tiagofsps.hunting_fishing_store.BaseControllerTest;
 import com.tiagofsps.hunting_fishing_store.cart.dto.request.AddToCartRequest;
 import com.tiagofsps.hunting_fishing_store.cart.dto.response.CartResponse;
 import com.tiagofsps.hunting_fishing_store.cart.service.CartService;
 import com.tiagofsps.hunting_fishing_store.common.exception.InsufficientStockException;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -21,11 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CartController.class)
-class CartControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
+class CartControllerTest extends BaseControllerTest {
 
     @MockitoBean
     private CartService cartService;
@@ -35,7 +29,7 @@ class CartControllerTest {
         CartResponse response = new CartResponse(1L, 1L, List.of(), BigDecimal.ZERO);
         when(cartService.getCart(1L)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/carts/1"))
+        mockMvc.perform(get("/api/v1/carts/1").with(userJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(1));
 
@@ -54,7 +48,7 @@ class CartControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/carts/1/items")
+        mockMvc.perform(post("/api/v1/carts/1/items").with(userJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated());
@@ -71,7 +65,7 @@ class CartControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/carts/1/items")
+        mockMvc.perform(post("/api/v1/carts/1/items").with(userJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest());
@@ -79,7 +73,7 @@ class CartControllerTest {
 
     @Test
     void shouldUpdateQuantity() throws Exception {
-        mockMvc.perform(put("/api/v1/carts/1/items/1")
+        mockMvc.perform(put("/api/v1/carts/1/items/1").with(userJwt())
                         .param("quantity", "5"))
                 .andExpect(status().isOk());
 
@@ -88,7 +82,7 @@ class CartControllerTest {
 
     @Test
     void shouldRemoveFromCart() throws Exception {
-        mockMvc.perform(delete("/api/v1/carts/1/items/1"))
+        mockMvc.perform(delete("/api/v1/carts/1/items/1").with(userJwt()))
                 .andExpect(status().isOk());
 
         verify(cartService).removeFromCart(1L, 1L);
@@ -96,7 +90,7 @@ class CartControllerTest {
 
     @Test
     void shouldClearCart() throws Exception {
-        mockMvc.perform(delete("/api/v1/carts/1"))
+        mockMvc.perform(delete("/api/v1/carts/1").with(userJwt()))
                 .andExpect(status().isNoContent());
 
         verify(cartService).clearCart(1L);

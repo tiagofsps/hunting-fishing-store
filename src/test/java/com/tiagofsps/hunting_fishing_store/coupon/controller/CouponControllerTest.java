@@ -1,16 +1,14 @@
 package com.tiagofsps.hunting_fishing_store.coupon.controller;
 
+import com.tiagofsps.hunting_fishing_store.BaseControllerTest;
 import com.tiagofsps.hunting_fishing_store.coupon.dto.request.CouponRequest;
 import com.tiagofsps.hunting_fishing_store.coupon.dto.response.CouponResponse;
 import com.tiagofsps.hunting_fishing_store.coupon.service.CouponService;
 import com.tiagofsps.hunting_fishing_store.common.exception.CouponNotFoundException;
 import com.tiagofsps.hunting_fishing_store.promotion.entity.DiscountType;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -23,11 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CouponController.class)
-class CouponControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
+class CouponControllerTest extends BaseControllerTest {
 
     @MockitoBean
     private CouponService couponService;
@@ -47,7 +41,7 @@ class CouponControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/coupons")
+        mockMvc.perform(post("/api/v1/coupons").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())
@@ -59,7 +53,7 @@ class CouponControllerTest {
         CouponResponse response = new CouponResponse(1L, "SAVE20", DiscountType.PERCENTAGE, BigDecimal.valueOf(20), null, null, null, LocalDateTime.now(), LocalDateTime.now().plusDays(1), true);
         when(couponService.findAll()).thenReturn(List.of(response));
 
-        mockMvc.perform(get("/api/v1/coupons"))
+        mockMvc.perform(get("/api/v1/coupons").with(adminJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].code").value("SAVE20"));
     }
@@ -68,7 +62,7 @@ class CouponControllerTest {
     void shouldReturnNotFoundWhenCouponDoesNotExist() throws Exception {
         when(couponService.findById(1L)).thenThrow(new CouponNotFoundException(1L));
 
-        mockMvc.perform(get("/api/v1/coupons/1"))
+        mockMvc.perform(get("/api/v1/coupons/1").with(adminJwt()))
                 .andExpect(status().isNotFound());
     }
 }

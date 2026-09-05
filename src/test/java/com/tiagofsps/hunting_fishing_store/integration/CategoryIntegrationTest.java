@@ -9,45 +9,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-
+import com.tiagofsps.hunting_fishing_store.BaseIntegrationTest;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Category;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.CategoryRepository;
 
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.security.test.context.support.WithMockUser;
-
-@Testcontainers
-@SpringBootTest
-@AutoConfigureMockMvc
-class CategoryIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17");
-
-    @Autowired
-    private MockMvc mockMvc;
+class CategoryIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private CategoryRepository categoryRepository;
 
-    @BeforeEach
-    void cleanDatabase() {
-        categoryRepository.deleteAll();
-    }
-
     @Test
-    @WithMockUser
     void shouldCreateCategory() throws Exception {
         String request = """
                 {
@@ -59,6 +33,7 @@ class CategoryIntegrationTest {
 
         mockMvc.perform(
                 post("/api/v1/categories")
+                        .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())
@@ -67,7 +42,6 @@ class CategoryIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldCreateSubcategory() throws Exception {
         Category parent = new Category();
         parent.setName("Fishing");
@@ -84,6 +58,7 @@ class CategoryIntegrationTest {
 
         mockMvc.perform(
                 post("/api/v1/categories")
+                        .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())

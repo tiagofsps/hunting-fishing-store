@@ -8,48 +8,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-
+import com.tiagofsps.hunting_fishing_store.BaseIntegrationTest;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Brand;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.BrandRepository;
 
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.security.test.context.support.WithMockUser;
-
-@Testcontainers
-@SpringBootTest
-@AutoConfigureMockMvc
-class BrandIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres =
-            new PostgreSQLContainer("postgres:17");
-
-    @Autowired
-    private MockMvc mockMvc;
+class BrandIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private BrandRepository brandRepository;
 
-    @BeforeEach
-    void cleanDatabase() {
-        brandRepository.deleteAll();
-    }
-
     @Test
-    @WithMockUser
     void shouldReturnAllBrands() throws Exception {
 
         Brand shimano = new Brand();
@@ -66,7 +38,7 @@ class BrandIntegrationTest {
         brandRepository.save(daiwa);
 
         mockMvc.perform(
-                get("/api/v1/brands"))
+                get("/api/v1/brands").with(adminJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(2))
@@ -77,7 +49,6 @@ class BrandIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldReturnBrandById() throws Exception {
 
         Brand brand = new Brand();
@@ -89,7 +60,7 @@ class BrandIntegrationTest {
 
         mockMvc.perform(
                 get("/api/v1/brands/{id}", saved.getId())
-                        .with(csrf()))
+                        .with(adminJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(saved.getId()))
                 .andExpect(jsonPath("$.name").value("Shimano"))
@@ -98,16 +69,14 @@ class BrandIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldReturnNotFoundWhenBrandDoesNotExist() throws Exception {
 
         mockMvc.perform(
                 get("/api/v1/brands/{id}", 999999L)
-                        .with(csrf()))
+                        .with(adminJwt()))
                 .andExpect(status().isNotFound());
     }
 
-    @WithMockUser
     @Test
     void shouldCreateBrand() throws Exception {
 
@@ -121,6 +90,7 @@ class BrandIntegrationTest {
 
         mockMvc.perform(
                 post("/api/v1/brands")
+                        .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())
@@ -130,7 +100,6 @@ class BrandIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldReturnConflictWhenCreatingBrandWithExistingSlug() throws Exception {
 
         Brand existingBrand = new Brand();
@@ -150,7 +119,7 @@ class BrandIntegrationTest {
 
         mockMvc.perform(
                 post("/api/v1/brands")
-                        .with(csrf())
+                        .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request)
         )
@@ -158,7 +127,6 @@ class BrandIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldReturnBadRequestWhenCreatingInvalidBrand() throws Exception {
 
         String request = """
@@ -171,7 +139,7 @@ class BrandIntegrationTest {
 
         mockMvc.perform(
                 post("/api/v1/brands")
-                        .with(csrf())
+                        .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request)
         )
@@ -179,7 +147,6 @@ class BrandIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldUpdateBrand() throws Exception {
 
         Brand brand = new Brand();
@@ -199,7 +166,7 @@ class BrandIntegrationTest {
 
         mockMvc.perform(
                 put("/api/v1/brands/{id}", saved.getId())
-                        .with(csrf())
+                        .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request)
         )
@@ -218,7 +185,6 @@ class BrandIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldReturnNotFoundWhenUpdatingNonExistingBrand() throws Exception {
 
         String request = """
@@ -231,7 +197,7 @@ class BrandIntegrationTest {
 
         mockMvc.perform(
                 put("/api/v1/brands/{id}", 999999L)
-                        .with(csrf())
+                        .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request)
         )
@@ -239,7 +205,6 @@ class BrandIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldReturnDuplicatedSlugWhenUpdatingBrand() throws Exception {
 
         Brand shimano = new Brand();
@@ -265,7 +230,7 @@ class BrandIntegrationTest {
 
         mockMvc.perform(
                 put("/api/v1/brands/{id}", savedDaiwa.getId())
-                        .with(csrf())
+                        .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request)
         )
@@ -273,7 +238,6 @@ class BrandIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldDeleteBrand() throws Exception {
 
         Brand brand = new Brand();
@@ -285,7 +249,7 @@ class BrandIntegrationTest {
 
         mockMvc.perform(
                 delete("/api/v1/brands/{id}", saved.getId())
-                        .with(csrf())
+                        .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)        
         )
         .andExpect(status().isNoContent());
@@ -295,12 +259,11 @@ class BrandIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldDeleteNonExistentBrand() throws Exception {
 
         mockMvc.perform(
                 delete("/api/v1/brands/{id}", 999999L)
-                        .with(csrf())
+                        .with(adminJwt())
         )
         .andExpect(status().isNotFound());
 

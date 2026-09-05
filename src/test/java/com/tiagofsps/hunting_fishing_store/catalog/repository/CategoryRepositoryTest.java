@@ -2,24 +2,14 @@ package com.tiagofsps.hunting_fishing_store.catalog.repository;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.tiagofsps.hunting_fishing_store.BaseRepositoryTest;
+import com.tiagofsps.hunting_fishing_store.catalog.entity.Category;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.postgresql.PostgreSQLContainer;
+
 import java.util.Optional;
 
-import com.tiagofsps.hunting_fishing_store.catalog.entity.Category;
-
-@Testcontainers
-@DataJpaTest
-class CategoryRepositoryTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17");
+class CategoryRepositoryTest extends BaseRepositoryTest {
 
     @Autowired
     private CategoryRepository categoryRepository;

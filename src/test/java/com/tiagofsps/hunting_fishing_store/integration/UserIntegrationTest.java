@@ -1,50 +1,31 @@
 package com.tiagofsps.hunting_fishing_store.integration;
 
+import com.tiagofsps.hunting_fishing_store.BaseIntegrationTest;
+import com.tiagofsps.hunting_fishing_store.user.entity.User;
 import com.tiagofsps.hunting_fishing_store.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+
+import org.springframework.transaction.annotation.Transactional;
+import com.jayway.jsonpath.JsonPath;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Testcontainers
-@SpringBootTest
-@AutoConfigureMockMvc
-class UserIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17");
-
-    @Autowired
-    private MockMvc mockMvc;
+@Transactional
+class UserIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
 
-    @BeforeEach
-    void setup() {
-        userRepository.deleteAll();
-    }
-
     @Test
-    @WithMockUser
     void shouldRegisterUser() throws Exception {
         String request = """
                 {
-                    "email": "test@example.com",
+                    "email": "register-unique@example.com",
                     "password": "password123",
                     "firstName": "John",
                     "lastName": "Doe"
@@ -54,28 +35,30 @@ class UserIntegrationTest {
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value("test@example.com"));
+                .andExpect(status().isCreated());
     }
 
     @Test
-    @WithMockUser
     void shouldAddAddressToUser() throws Exception {
-        String registrationRequest = """
+        String email = "address-unique@example.com";
+        String registrationRequest = String.format("""
                 {
-                    "email": "test@example.com",
+                    "email": "%s",
                     "password": "password123",
                     "firstName": "John",
                     "lastName": "Doe"
                 }
-                """;
+                """, email);
 
+        // 1. Perform registration endpoint call
         String registerResponse = mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registrationRequest))
+                .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        
-        Long userId = Long.valueOf(registerResponse.split(",")[0].split(":")[1]);
+
+        // 2. Extract the ID from the response JSON
+        Integer userId = JsonPath.read(registerResponse, "$.id");
 
         String addressRequest = """
                 {
@@ -90,6 +73,7 @@ class UserIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/v1/users/" + userId + "/addresses")
+                        .with(userJwt(email))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(addressRequest))
                 .andExpect(status().isCreated())

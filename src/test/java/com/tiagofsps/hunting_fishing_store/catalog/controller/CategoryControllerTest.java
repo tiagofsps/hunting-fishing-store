@@ -15,23 +15,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
+import com.tiagofsps.hunting_fishing_store.BaseControllerTest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.request.CategoryCreateRequest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.response.CategoryResponse;
 import com.tiagofsps.hunting_fishing_store.catalog.service.CategoryService;
 import com.tiagofsps.hunting_fishing_store.common.exception.CategoryAlreadyExistsException;
 import com.tiagofsps.hunting_fishing_store.common.exception.CategoryNotFoundException;
 
-@WebMvcTest(CategoryController.class)
-class CategoryControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
+class CategoryControllerTest extends BaseControllerTest {
 
     @MockitoBean
     private CategoryService categoryService;
@@ -41,7 +35,7 @@ class CategoryControllerTest {
         CategoryResponse response = new CategoryResponse(1L, "Fishing", "fishing", "Desc", null);
         when(categoryService.findAll()).thenReturn(List.of(response));
 
-        mockMvc.perform(get("/api/v1/categories"))
+        mockMvc.perform(get("/api/v1/categories").with(adminJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Fishing"))
                 .andExpect(jsonPath("$[0].slug").value("fishing"));
@@ -54,7 +48,7 @@ class CategoryControllerTest {
         CategoryResponse response = new CategoryResponse(1L, "Fishing", "fishing", "Desc", null);
         when(categoryService.findById(1L)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/categories/1"))
+        mockMvc.perform(get("/api/v1/categories/1").with(adminJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Fishing"));
@@ -75,7 +69,7 @@ class CategoryControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/categories")
+        mockMvc.perform(post("/api/v1/categories").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())
@@ -95,7 +89,7 @@ class CategoryControllerTest {
                 }
                 """;
 
-        mockMvc.perform(put("/api/v1/categories/1")
+        mockMvc.perform(put("/api/v1/categories/1").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isOk())
@@ -104,7 +98,7 @@ class CategoryControllerTest {
 
     @Test
     void shouldDeleteCategory() throws Exception {
-        mockMvc.perform(delete("/api/v1/categories/1"))
+        mockMvc.perform(delete("/api/v1/categories/1").with(adminJwt()))
                 .andExpect(status().isNoContent());
 
         verify(categoryService).delete(1L);
@@ -114,7 +108,7 @@ class CategoryControllerTest {
     void shouldReturnNotFoundWhenCategoryDoesNotExist() throws Exception {
         when(categoryService.findById(1L)).thenThrow(new CategoryNotFoundException(1L));
 
-        mockMvc.perform(get("/api/v1/categories/1"))
+        mockMvc.perform(get("/api/v1/categories/1").with(adminJwt()))
                 .andExpect(status().isNotFound());
     }
 
@@ -129,7 +123,7 @@ class CategoryControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/categories")
+        mockMvc.perform(post("/api/v1/categories").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isConflict());
@@ -144,7 +138,7 @@ class CategoryControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/categories")
+        mockMvc.perform(post("/api/v1/categories").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest());

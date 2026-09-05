@@ -1,15 +1,13 @@
 package com.tiagofsps.hunting_fishing_store.catalog.controller;
 
+import com.tiagofsps.hunting_fishing_store.BaseControllerTest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.request.StockMovementRequest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.response.StockMovementResponse;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.MovementType;
 import com.tiagofsps.hunting_fishing_store.catalog.service.StockMovementService;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
@@ -19,11 +17,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(StockMovementController.class)
-class StockMovementControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
+class StockMovementControllerTest extends BaseControllerTest {
 
     @MockitoBean
     private StockMovementService stockMovementService;
@@ -42,7 +36,7 @@ class StockMovementControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/stock-movements")
+        mockMvc.perform(post("/api/v1/stock-movements").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())

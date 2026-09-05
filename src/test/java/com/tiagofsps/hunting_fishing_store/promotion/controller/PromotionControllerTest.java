@@ -1,16 +1,14 @@
 package com.tiagofsps.hunting_fishing_store.promotion.controller;
 
+import com.tiagofsps.hunting_fishing_store.BaseControllerTest;
 import com.tiagofsps.hunting_fishing_store.promotion.dto.request.PromotionRequest;
 import com.tiagofsps.hunting_fishing_store.promotion.dto.response.PromotionResponse;
 import com.tiagofsps.hunting_fishing_store.promotion.entity.DiscountType;
 import com.tiagofsps.hunting_fishing_store.promotion.service.PromotionService;
 import com.tiagofsps.hunting_fishing_store.common.exception.PromotionNotFoundException;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,11 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(PromotionController.class)
-class PromotionControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
+class PromotionControllerTest extends BaseControllerTest {
 
     @MockitoBean
     private PromotionService promotionService;
@@ -37,7 +31,7 @@ class PromotionControllerTest {
         PromotionResponse r2 = new PromotionResponse(2L, "S2", DiscountType.FIXED_AMOUNT, BigDecimal.TEN, 0, true, LocalDateTime.now(), LocalDateTime.now().plusDays(1), true, List.of());
         when(promotionService.findAll()).thenReturn(List.of(r1, r2));
 
-        mockMvc.perform(get("/api/v1/promotions"))
+        mockMvc.perform(get("/api/v1/promotions").with(adminJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
 
@@ -59,7 +53,7 @@ class PromotionControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/promotions")
+        mockMvc.perform(post("/api/v1/promotions").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())
@@ -74,7 +68,7 @@ class PromotionControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/promotions")
+        mockMvc.perform(post("/api/v1/promotions").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest());
@@ -86,13 +80,13 @@ class PromotionControllerTest {
     void shouldReturnNotFoundWhenPromotionDoesNotExist() throws Exception {
         when(promotionService.findById(1L)).thenThrow(new PromotionNotFoundException(1L));
 
-        mockMvc.perform(get("/api/v1/promotions/1"))
+        mockMvc.perform(get("/api/v1/promotions/1").with(adminJwt()))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void shouldDeletePromotion() throws Exception {
-        mockMvc.perform(delete("/api/v1/promotions/1"))
+        mockMvc.perform(delete("/api/v1/promotions/1").with(adminJwt()))
                 .andExpect(status().isNoContent());
 
         verify(promotionService).delete(1L);

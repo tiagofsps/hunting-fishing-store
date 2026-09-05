@@ -9,14 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-
+import com.tiagofsps.hunting_fishing_store.BaseIntegrationTest;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Brand;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Category;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Product;
@@ -24,20 +18,7 @@ import com.tiagofsps.hunting_fishing_store.catalog.repository.BrandRepository;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.CategoryRepository;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.ProductRepository;
 
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.security.test.context.support.WithMockUser;
-
-@Testcontainers
-@SpringBootTest
-@AutoConfigureMockMvc
-class ProductIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17");
-
-    @Autowired
-    private MockMvc mockMvc;
+class ProductIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private ProductRepository productRepository;
@@ -53,10 +34,6 @@ class ProductIntegrationTest {
 
     @BeforeEach
     void setup() {
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        brandRepository.deleteAll();
-
         Brand brand = new Brand();
         brand.setName("Shimano");
         brand.setSlug("shimano");
@@ -69,7 +46,6 @@ class ProductIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldCreateProductWithItemsAndImages() throws Exception {
         String request = """
                 {
@@ -104,6 +80,7 @@ class ProductIntegrationTest {
 
         mockMvc.perform(
                 post("/api/v1/products")
+                        .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())
@@ -116,7 +93,6 @@ class ProductIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     void shouldReturnNotFoundWhenBrandDoesNotExist() throws Exception {
         String request = """
                 {
@@ -129,6 +105,7 @@ class ProductIntegrationTest {
 
         mockMvc.perform(
                 post("/api/v1/products")
+                        .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isNotFound());

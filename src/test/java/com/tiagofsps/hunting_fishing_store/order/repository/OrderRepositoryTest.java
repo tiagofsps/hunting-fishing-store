@@ -1,5 +1,6 @@
 package com.tiagofsps.hunting_fishing_store.order.repository;
 
+import com.tiagofsps.hunting_fishing_store.BaseRepositoryTest;
 import com.tiagofsps.hunting_fishing_store.order.entity.Order;
 import com.tiagofsps.hunting_fishing_store.order.entity.OrderStatus;
 import com.tiagofsps.hunting_fishing_store.user.entity.Address;
@@ -9,11 +10,6 @@ import com.tiagofsps.hunting_fishing_store.user.repository.AddressRepository;
 import com.tiagofsps.hunting_fishing_store.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,13 +18,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Testcontainers
-@DataJpaTest
-class OrderRepositoryTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17");
+class OrderRepositoryTest extends BaseRepositoryTest {
 
     @Autowired
     private OrderRepository orderRepository;

@@ -4,26 +4,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-import java.util.Optional;
-
-import com.tiagofsps.hunting_fishing_store.catalog.entity.Product;
+import com.tiagofsps.hunting_fishing_store.BaseRepositoryTest;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Brand;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Category;
+import com.tiagofsps.hunting_fishing_store.catalog.entity.Product;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@Testcontainers
-@DataJpaTest
-class ProductRepositoryTest {
+import java.util.Optional;
 
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17");
+class ProductRepositoryTest extends BaseRepositoryTest {
 
     @Autowired
     private ProductRepository productRepository;

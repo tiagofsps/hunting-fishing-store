@@ -1,14 +1,10 @@
 package com.tiagofsps.hunting_fishing_store.coupon.repository;
 
+import com.tiagofsps.hunting_fishing_store.BaseRepositoryTest;
 import com.tiagofsps.hunting_fishing_store.coupon.entity.Coupon;
 import com.tiagofsps.hunting_fishing_store.promotion.entity.DiscountType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,13 +12,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Testcontainers
-@DataJpaTest
-class CouponRepositoryTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17");
+class CouponRepositoryTest extends BaseRepositoryTest {
 
     @Autowired
     private CouponRepository couponRepository;

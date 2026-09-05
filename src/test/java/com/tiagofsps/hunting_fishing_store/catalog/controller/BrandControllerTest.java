@@ -15,12 +15,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
+import com.tiagofsps.hunting_fishing_store.BaseControllerTest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.request.BrandCreateRequest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.response.BrandResponse;
 import com.tiagofsps.hunting_fishing_store.catalog.service.BrandService;
@@ -28,11 +26,7 @@ import com.tiagofsps.hunting_fishing_store.common.exception.BrandAlreadyExistsEx
 import com.tiagofsps.hunting_fishing_store.common.exception.BrandNotFoundException;
 
 
-@WebMvcTest(BrandController.class)
-class BrandControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
+class BrandControllerTest extends BaseControllerTest {
 
     @MockitoBean
     private BrandService brandService;
@@ -49,7 +43,7 @@ class BrandControllerTest {
 
         when(brandService.findAll()).thenReturn(List.of(response));
 
-        mockMvc.perform(get("/api/v1/brands"))
+        mockMvc.perform(get("/api/v1/brands").with(adminJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].name").value("Shimano"))
@@ -72,7 +66,7 @@ class BrandControllerTest {
         when(brandService.findById(1L))
                 .thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/brands/1"))
+        mockMvc.perform(get("/api/v1/brands/1").with(adminJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Shimano"))
@@ -104,7 +98,7 @@ class BrandControllerTest {
                 """;
 
         mockMvc.perform(
-                post("/api/v1/brands")
+                post("/api/v1/brands").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())
@@ -128,7 +122,7 @@ class BrandControllerTest {
                 """;
 
         mockMvc.perform(
-                post("/api/v1/brands")
+                post("/api/v1/brands").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest());
@@ -151,7 +145,7 @@ class BrandControllerTest {
                 """;
 
         mockMvc.perform(
-                post("/api/v1/brands")
+                post("/api/v1/brands").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isConflict());
@@ -181,7 +175,7 @@ class BrandControllerTest {
                 """;
 
         mockMvc.perform(
-                put("/api/v1/brands/1")
+                put("/api/v1/brands/1").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isOk())
@@ -213,7 +207,7 @@ class BrandControllerTest {
                 """;
 
         mockMvc.perform(
-                put("/api/v1/brands/1")
+                put("/api/v1/brands/1").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isNotFound());
@@ -236,7 +230,7 @@ class BrandControllerTest {
                 """;
 
         mockMvc.perform(
-                put("/api/v1/brands/1")
+                put("/api/v1/brands/1").with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isConflict());
@@ -245,7 +239,7 @@ class BrandControllerTest {
     @Test
     void shouldDeleteBrand() throws Exception {
 
-        mockMvc.perform(delete("/api/v1/brands/1"))
+        mockMvc.perform(delete("/api/v1/brands/1").with(adminJwt()))
                 .andExpect(status().isNoContent());
 
         verify(brandService).delete(1L);
@@ -258,7 +252,7 @@ class BrandControllerTest {
                 .when(brandService)
                 .delete(1L);
 
-        mockMvc.perform(delete("/api/v1/brands/1"))
+        mockMvc.perform(delete("/api/v1/brands/1").with(adminJwt()))
                 .andExpect(status().isNotFound());
 
         verify(brandService).delete(1L);

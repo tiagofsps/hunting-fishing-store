@@ -6,25 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.tiagofsps.hunting_fishing_store.BaseRepositoryTest;
+import com.tiagofsps.hunting_fishing_store.catalog.entity.Brand;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.postgresql.PostgreSQLContainer;
+
 import java.util.Optional;
 
-import com.tiagofsps.hunting_fishing_store.catalog.entity.Brand;
-
-@Testcontainers
-@DataJpaTest
-public class BrandRepositoryTest {
-        
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17");
+public class BrandRepositoryTest extends BaseRepositoryTest {
 
     @Autowired
     private BrandRepository brandRepository;

@@ -1,5 +1,6 @@
 package com.tiagofsps.hunting_fishing_store.integration;
 
+import com.tiagofsps.hunting_fishing_store.BaseIntegrationTest;
 import com.tiagofsps.hunting_fishing_store.cart.entity.Cart;
 import com.tiagofsps.hunting_fishing_store.cart.entity.CartItem;
 import com.tiagofsps.hunting_fishing_store.cart.repository.CartRepository;
@@ -20,16 +21,8 @@ import com.tiagofsps.hunting_fishing_store.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -40,17 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Testcontainers
-@SpringBootTest
-@AutoConfigureMockMvc
-class OrderIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17");
-
-    @Autowired
-    private MockMvc mockMvc;
+class OrderIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -81,15 +64,6 @@ class OrderIntegrationTest {
 
     @BeforeEach
     void setup() {
-        orderRepository.deleteAll();
-        cartRepository.deleteAll();
-        productItemRepository.deleteAll();
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        brandRepository.deleteAll();
-        addressRepository.deleteAll();
-        userRepository.deleteAll();
-
         User user = new User();
         user.setEmail("test@example.com");
         user.setPassword("pass");
@@ -145,7 +119,6 @@ class OrderIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     @Transactional
     void shouldCheckoutSuccessfully() throws Exception {
         String checkoutRequest = """
@@ -156,6 +129,7 @@ class OrderIntegrationTest {
                 """.formatted(savedAddress.getId(), savedAddress.getId());
 
         mockMvc.perform(post("/api/v1/orders/checkout/" + savedUser.getId())
+                        .with(userJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(checkoutRequest))
                 .andExpect(status().isCreated())

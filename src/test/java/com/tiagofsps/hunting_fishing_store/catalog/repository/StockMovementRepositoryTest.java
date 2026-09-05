@@ -1,13 +1,9 @@
 package com.tiagofsps.hunting_fishing_store.catalog.repository;
 
+import com.tiagofsps.hunting_fishing_store.BaseRepositoryTest;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -15,13 +11,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@Testcontainers
-@DataJpaTest
-class StockMovementRepositoryTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17");
+class StockMovementRepositoryTest extends BaseRepositoryTest {
 
     @Autowired
     private StockMovementRepository stockMovementRepository;
