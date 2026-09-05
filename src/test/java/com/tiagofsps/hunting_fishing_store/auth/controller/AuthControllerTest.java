@@ -4,11 +4,9 @@ import com.tiagofsps.hunting_fishing_store.auth.service.TokenService;
 import com.tiagofsps.hunting_fishing_store.config.security.CookieProvider;
 import com.tiagofsps.hunting_fishing_store.user.dto.request.UserRegistrationRequest;
 import com.tiagofsps.hunting_fishing_store.user.dto.response.UserResponse;
-import com.tiagofsps.hunting_fishing_store.user.service.UserService;
+import com.tiagofsps.hunting_fishing_store.BaseControllerTest;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,7 +18,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,11 +28,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(AuthController.class)
-class AuthControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
+class AuthControllerTest extends BaseControllerTest {
 
     @MockitoBean
     private AuthenticationManager authenticationManager;
@@ -45,12 +38,6 @@ class AuthControllerTest {
 
     @MockitoBean
     private JwtDecoder jwtDecoder;
-
-    @MockitoBean
-    private UserService userService;
-
-    @MockitoBean
-    private org.springframework.security.core.userdetails.UserDetailsService userDetailsService;
 
     @MockitoBean
     private CookieProvider cookieProvider;
@@ -119,7 +106,7 @@ class AuthControllerTest {
         when(cookieProvider.createRefreshTokenCookie(newRefreshToken)).thenReturn(
                 ResponseCookie.from("refresh_token", newRefreshToken).build());
 
-        mockMvc.perform(post("/api/v1/auth/refresh")
+        mockMvc.perform(post("/api/v1/auth/refresh").with(userJwt())
                         .cookie(new Cookie("refresh_token", oldRefreshToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value(newAccessToken))
@@ -146,7 +133,7 @@ class AuthControllerTest {
         when(jwtDecoder.decode(oldRefreshToken)).thenReturn(jwt);
         when(tokenService.validateRefreshToken(tokenId)).thenReturn(false);
 
-        mockMvc.perform(post("/api/v1/auth/refresh")
+        mockMvc.perform(post("/api/v1/auth/refresh").with(userJwt())
                         .cookie(new Cookie("refresh_token", oldRefreshToken)))
                 .andExpect(status().isUnauthorized());
     }
@@ -164,7 +151,7 @@ class AuthControllerTest {
         when(cookieProvider.createRefreshTokenClearCookie()).thenReturn(
                 ResponseCookie.from("refresh_token", "").maxAge(0).build());
 
-        mockMvc.perform(post("/api/v1/auth/logout")
+        mockMvc.perform(post("/api/v1/auth/logout").with(userJwt())
                         .cookie(new Cookie("refresh_token", refreshToken)))
                 .andExpect(status().isNoContent())
                 .andExpect(header().exists("Set-Cookie"));
@@ -180,7 +167,7 @@ class AuthControllerTest {
         when(cookieProvider.createRefreshTokenClearCookie()).thenReturn(
                 ResponseCookie.from("refresh_token", "").maxAge(0).build());
 
-        mockMvc.perform(post("/api/v1/auth/logout")
+        mockMvc.perform(post("/api/v1/auth/logout").with(userJwt())
                         .cookie(new Cookie("refresh_token", invalidToken)))
                 .andExpect(status().isNoContent())
                 .andExpect(header().exists("Set-Cookie"));
