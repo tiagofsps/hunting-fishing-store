@@ -1,6 +1,12 @@
 package com.tiagofsps.hunting_fishing_store.config.security;
 
-import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.OctetSequenceKey;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -19,6 +25,10 @@ public class JwtEncoderConfig {
     @Bean
     public JwtEncoder jwtEncoder() {
         SecretKey key = new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
-        return new NimbusJwtEncoder(new ImmutableSecret<>(key));
+        JWK jwk = new OctetSequenceKey.Builder(key)
+                .algorithm(JWSAlgorithm.HS256)
+                .build();
+        JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
+        return new NimbusJwtEncoder(jwks);
     }
 }
