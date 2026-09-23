@@ -26,14 +26,14 @@ class PaymentControllerTest extends BaseControllerTest {
 
     @Test
     void shouldInitiatePayment() throws Exception {
-        PaymentResponse response = new PaymentResponse(1L, 1L, BigDecimal.valueOf(100.0), PaymentMethod.MBWAY, PaymentStatus.PENDING, "tx-123");
+        PaymentResponse response = new PaymentResponse(1L, 1L, BigDecimal.valueOf(100.0), PaymentMethod.MBWAY, PaymentStatus.PENDING, "tx-123", null, null, "351912345678", null, null);
         when(paymentService.initiatePayment(any(PaymentRequest.class))).thenReturn(response);
 
         String request = """
                 {
                     "orderId": 1,
                     "paymentMethod": "MBWAY",
-                    "amount": 100.0
+                    "mbwayPhone": "351912345678"
                 }
                 """;
 

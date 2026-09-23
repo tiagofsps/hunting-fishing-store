@@ -4,5 +4,5 @@ public enum PaymentMethod {
     MBWAY,
     MULTIBANCO,
     CREDIT_CARD,
-    PAYPAL
+    KLARNA
 }

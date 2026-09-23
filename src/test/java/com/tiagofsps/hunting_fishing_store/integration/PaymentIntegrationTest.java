@@ -77,7 +77,7 @@ class PaymentIntegrationTest extends BaseIntegrationTest {
                 {
                     "orderId": %d,
                     "paymentMethod": "MBWAY",
-                    "amount": 100.0
+                    "mbwayPhone": "351912345678"
                 }
                 """.formatted(savedOrder.getId());
 
@@ -92,7 +92,7 @@ class PaymentIntegrationTest extends BaseIntegrationTest {
         Long paymentId = Long.valueOf(initiateResponse.split(",")[0].split(":")[1]);
 
         mockMvc.perform(patch("/api/v1/payments/" + paymentId + "/status")
-                        .with(userJwt())
+                        .with(adminJwt())
                         .param("status", "COMPLETED"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
