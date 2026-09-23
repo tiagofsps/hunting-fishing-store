@@ -6,7 +6,7 @@ A modern e-commerce platform for hunting and fishing equipment, built with Sprin
 
 - Build tool is **Maven** via the wrapper `./mvnw`.
 - First-time setup: `docker compose up -d` (Postgres on port 5432, Redis on port 6379), `./mvnw clean install`, `./mvnw spring-boot:run`.
-- Verification/Build check: `./mvnw clean package` runs compile, lint checks, and unit/integration tests (via Testcontainers).
+- Verification/Build check: `./mvnw clean package` runs compile and unit/integration tests (via Testcontainers). Note: there is no dedicated lint plugin; correctness is guarded by compilation and tests.
 - Running tests: `./mvnw test`.
 
 ## Architecture

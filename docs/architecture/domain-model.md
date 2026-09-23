@@ -338,9 +338,9 @@ All main entities include the following audit fields:
 | Field           | Type         | Notes                                         |
 | --------------- | ------------ | --------------------------------------------- |
 | `id`            | `Long`       | Primary Key                                   |
-| `paymentMethod` | `Enum`       | MBWAY, MULTIBANCO, CREDIT_CARD, PAYPAL        |
+| `paymentMethod` | `Enum`       | MBWAY, MULTIBANCO, CREDIT_CARD, KLARNA        |
 | `status`        | `Enum`       | PENDING, COMPLETED, FAILED, EXPIRED, REFUNDED |
-| `amount`        | `BigDecimal` |                                               |
+| `amount`        | `BigDecimal` | Always read from the server-side order        |
 | `transactionId` | `String`     |                                               |
 
 ### Relationships
