@@ -29,7 +29,7 @@ class OrderControllerTest extends BaseControllerTest {
 
     @Test
     void shouldCheckout() throws Exception {
-        OrderResponse response = new OrderResponse(1L, "ORD-123", LocalDateTime.now(), OrderStatus.PENDING, BigDecimal.valueOf(200.0), BigDecimal.ZERO, 1L, List.of());
+        OrderResponse response = orderResponse();
         when(orderService.checkout(any(Long.class), any(CheckoutRequest.class))).thenReturn(response);
 
         String request = """
@@ -58,7 +58,7 @@ class OrderControllerTest extends BaseControllerTest {
 
     @Test
     void shouldReturnOrderByNumber() throws Exception {
-        OrderResponse response = new OrderResponse(1L, "ORD-123", LocalDateTime.now(), OrderStatus.PENDING, BigDecimal.valueOf(200.0), BigDecimal.ZERO, 1L, List.of());
+        OrderResponse response = orderResponse();
         when(orderService.getOrderByNumber("ORD-123")).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/orders/ORD-123").with(userJwt()))
@@ -71,5 +71,11 @@ class OrderControllerTest extends BaseControllerTest {
 
         mockMvc.perform(get("/api/v1/orders/XXX").with(userJwt()))
                 .andExpect(status().isNotFound());
+    }
+
+    private OrderResponse orderResponse() {
+        return new OrderResponse(1L, "ORD-123", LocalDateTime.now(), OrderStatus.PENDING,
+                BigDecimal.valueOf(200.0), BigDecimal.ZERO, BigDecimal.valueOf(200.0), BigDecimal.ZERO,
+                1L, null, null, List.of());
     }
 }
