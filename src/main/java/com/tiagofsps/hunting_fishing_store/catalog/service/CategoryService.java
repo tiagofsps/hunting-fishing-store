@@ -1,6 +1,8 @@
 package com.tiagofsps.hunting_fishing_store.catalog.service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +11,7 @@ import com.tiagofsps.hunting_fishing_store.catalog.dto.request.CategoryCreateReq
 import com.tiagofsps.hunting_fishing_store.catalog.dto.response.CategoryResponse;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Category;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.CategoryRepository;
+import com.tiagofsps.hunting_fishing_store.catalog.repository.ProductRepository;
 import com.tiagofsps.hunting_fishing_store.common.exception.CategoryAlreadyExistsException;
 import com.tiagofsps.hunting_fishing_store.common.exception.CategoryNotFoundException;
 
@@ -16,29 +19,43 @@ import com.tiagofsps.hunting_fishing_store.common.exception.CategoryNotFoundExce
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
 
-    public CategoryService(CategoryRepository categoryRepository) {
+    public CategoryService(CategoryRepository categoryRepository, ProductRepository productRepository) {
         this.categoryRepository = categoryRepository;
+        this.productRepository = productRepository;
     }
 
-    private CategoryResponse toResponse(Category category) {
+    private CategoryResponse toResponse(Category category, Map<Long, Long> productCountsByCategory) {
         return new CategoryResponse(
                 category.getId(),
                 category.getName(),
                 category.getSlug(),
                 category.getDescription(),
-                category.getParentCategory() != null ? category.getParentCategory().getId() : null
+                category.getParentCategory() != null ? category.getParentCategory().getId() : null,
+                productCountsByCategory.getOrDefault(category.getId(), 0L)
         );
+    }
+
+    private Map<Long, Long> productCountsByCategory() {
+        return productRepository.countProductsByCategory().stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
     }
 
     public CategoryResponse findById(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new CategoryNotFoundException(id));
-        return toResponse(category);
+        return toResponse(category, productCountsByCategory());
     }
 
     public List<CategoryResponse> findAll() {
-        return categoryRepository.findAll().stream().map(this::toResponse).toList();
+        Map<Long, Long> productCounts = productCountsByCategory();
+        return categoryRepository.findAll().stream()
+                .map(category -> toResponse(category, productCounts))
+                .toList();
     }
 
     @Transactional
@@ -59,7 +76,7 @@ public class CategoryService {
         }
 
         Category savedCategory = categoryRepository.save(category);
-        return toResponse(savedCategory);
+        return toResponse(savedCategory, productCountsByCategory());
     }
 
     @Transactional
@@ -84,7 +101,7 @@ public class CategoryService {
         }
 
         Category updatedCategory = categoryRepository.save(category);
-        return toResponse(updatedCategory);
+        return toResponse(updatedCategory, productCountsByCategory());
     }
 
     @Transactional

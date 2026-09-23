@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -20,6 +21,7 @@ import com.tiagofsps.hunting_fishing_store.BaseControllerTest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.request.ProductCreateRequest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.response.ProductResponse;
 import com.tiagofsps.hunting_fishing_store.catalog.service.ProductService;
+import com.tiagofsps.hunting_fishing_store.common.exception.InvalidSortFieldException;
 import com.tiagofsps.hunting_fishing_store.common.exception.ProductAlreadyExistsException;
 import com.tiagofsps.hunting_fishing_store.common.exception.ProductNotFoundException;
 
@@ -30,19 +32,38 @@ class ProductControllerTest extends BaseControllerTest {
 
     @Test
     void shouldReturnAllProducts() throws Exception {
-        ProductResponse response = new ProductResponse(1L, "Fishing Rod", "fishing-rod", "Desc", false, 1L, 1L, List.of(), List.of());
-        when(productService.findAll()).thenReturn(List.of(response));
+        ProductResponse response = new ProductResponse(1L, "Fishing Rod", "fishing-rod", "Desc", false, null, 1L, 1L, List.of(), List.of());
+        when(productService.findAll(null, null, null, "createdAt", "desc", 0, 20))
+                .thenReturn(new PageImpl<>(List.of(response)));
 
         mockMvc.perform(get("/api/v1/products").with(adminJwt()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Fishing Rod"));
+                .andExpect(jsonPath("$.content[0].name").value("Fishing Rod"))
+                .andExpect(jsonPath("$.totalElements").value(1));
 
-        verify(productService).findAll();
+        verify(productService).findAll(null, null, null, "createdAt", "desc", 0, 20);
+    }
+
+    @Test
+    void shouldReturnInvalidSortFieldWhenSortNotWhitelisted() throws Exception {
+        when(productService.findAll(null, null, null, "description", "asc", 0, 20))
+                .thenThrow(new InvalidSortFieldException("description"));
+
+        mockMvc.perform(get("/api/v1/products").param("sort", "description")
+                        .with(adminJwt()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenSizeExceedsMax() throws Exception {
+        mockMvc.perform(get("/api/v1/products").param("size", "500")
+                        .with(adminJwt()))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void shouldReturnProductById() throws Exception {
-        ProductResponse response = new ProductResponse(1L, "Fishing Rod", "fishing-rod", "Desc", false, 1L, 1L, List.of(), List.of());
+        ProductResponse response = new ProductResponse(1L, "Fishing Rod", "fishing-rod", "Desc", false, null, 1L, 1L, List.of(), List.of());
         when(productService.findById(1L)).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/products/1").with(adminJwt()))
@@ -55,7 +76,7 @@ class ProductControllerTest extends BaseControllerTest {
 
     @Test
     void shouldCreateProduct() throws Exception {
-        ProductResponse response = new ProductResponse(1L, "Fishing Rod", "fishing-rod", "Desc", false, 1L, 1L, List.of(), List.of());
+        ProductResponse response = new ProductResponse(1L, "Fishing Rod", "fishing-rod", "Desc", false, null, 1L, 1L, List.of(), List.of());
         when(productService.create(any(ProductCreateRequest.class))).thenReturn(response);
 
         String request = """
@@ -76,7 +97,7 @@ class ProductControllerTest extends BaseControllerTest {
 
     @Test
     void shouldUpdateProduct() throws Exception {
-        ProductResponse response = new ProductResponse(1L, "Fishing Rod Updated", "fishing-rod-updated", "New Desc", false, 1L, 1L, List.of(), List.of());
+        ProductResponse response = new ProductResponse(1L, "Fishing Rod Updated", "fishing-rod-updated", "New Desc", false, null, 1L, 1L, List.of(), List.of());
         when(productService.update(any(Long.class), any(ProductCreateRequest.class))).thenReturn(response);
 
         String request = """

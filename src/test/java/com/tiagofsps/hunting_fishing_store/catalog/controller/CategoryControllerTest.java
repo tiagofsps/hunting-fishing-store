@@ -32,7 +32,7 @@ class CategoryControllerTest extends BaseControllerTest {
 
     @Test
     void shouldReturnAllCategories() throws Exception {
-        CategoryResponse response = new CategoryResponse(1L, "Fishing", "fishing", "Desc", null);
+        CategoryResponse response = new CategoryResponse(1L, "Fishing", "fishing", "Desc", null, 0L);
         when(categoryService.findAll()).thenReturn(List.of(response));
 
         mockMvc.perform(get("/api/v1/categories").with(adminJwt()))
@@ -45,7 +45,7 @@ class CategoryControllerTest extends BaseControllerTest {
 
     @Test
     void shouldReturnCategoryById() throws Exception {
-        CategoryResponse response = new CategoryResponse(1L, "Fishing", "fishing", "Desc", null);
+        CategoryResponse response = new CategoryResponse(1L, "Fishing", "fishing", "Desc", null, 0L);
         when(categoryService.findById(1L)).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/categories/1").with(adminJwt()))
@@ -58,7 +58,7 @@ class CategoryControllerTest extends BaseControllerTest {
 
     @Test
     void shouldCreateCategory() throws Exception {
-        CategoryResponse response = new CategoryResponse(1L, "Fishing", "fishing", "Desc", null);
+        CategoryResponse response = new CategoryResponse(1L, "Fishing", "fishing", "Desc", null, 0L);
         when(categoryService.create(any(CategoryCreateRequest.class))).thenReturn(response);
 
         String request = """
@@ -78,7 +78,7 @@ class CategoryControllerTest extends BaseControllerTest {
 
     @Test
     void shouldUpdateCategory() throws Exception {
-        CategoryResponse response = new CategoryResponse(1L, "Fishing Updated", "fishing-updated", "New Desc", null);
+        CategoryResponse response = new CategoryResponse(1L, "Fishing Updated", "fishing-updated", "New Desc", null, 0L);
         when(categoryService.update(any(Long.class), any(CategoryCreateRequest.class))).thenReturn(response);
 
         String request = """

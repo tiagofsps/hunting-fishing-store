@@ -5,5 +5,6 @@ public record CategoryResponse(
     String name,
     String slug,
     String description,
-    Long parentCategoryId
+    Long parentCategoryId,
+    Long productCount
 ) {}

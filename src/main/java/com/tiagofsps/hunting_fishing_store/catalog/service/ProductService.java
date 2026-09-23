@@ -3,6 +3,9 @@ package com.tiagofsps.hunting_fishing_store.catalog.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,13 +21,18 @@ import com.tiagofsps.hunting_fishing_store.catalog.entity.Category;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.ProductRepository;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.BrandRepository;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.CategoryRepository;
+import com.tiagofsps.hunting_fishing_store.common.exception.InvalidSortFieldException;
 import com.tiagofsps.hunting_fishing_store.common.exception.ProductAlreadyExistsException;
 import com.tiagofsps.hunting_fishing_store.common.exception.ProductNotFoundException;
 import com.tiagofsps.hunting_fishing_store.common.exception.BrandNotFoundException;
 import com.tiagofsps.hunting_fishing_store.common.exception.CategoryNotFoundException;
+import com.tiagofsps.hunting_fishing_store.common.exception.LicenseTypeRequiredException;
 
 @Service
 public class ProductService {
+
+    private static final List<String> ALLOWED_SORT_FIELDS = List.of("name", "createdAt");
+    private static final List<String> ALLOWED_SORT_DIRECTIONS = List.of("asc", "desc");
 
     private final ProductRepository productRepository;
     private final BrandRepository brandRepository;
@@ -65,6 +73,7 @@ public class ProductService {
                 product.getSlug(),
                 product.getDescription(),
                 product.getRequiresLicense(),
+                product.getLicenseType(),
                 product.getCategory().getId(),
                 product.getBrand().getId(),
                 items,
@@ -78,12 +87,32 @@ public class ProductService {
         return toResponse(product);
     }
 
-    public List<ProductResponse> findAll() {
-        return productRepository.findAll().stream().map(this::toResponse).toList();
+    /**
+     * Paginated, filterable product search. Returns a Spring Data Page (a
+     * deliberate contract change from the previous plain list so the catalog
+     * can scale beyond a single page).
+     *
+     * @param sortField whitelisted field; must be one of ALLOWED_SORT_FIELDS.
+     * @param sortDirection "asc" or "desc".
+     */
+    public Page<ProductResponse> findAll(Long categoryId, Long brandId, String query, String sortField,
+                                         String sortDirection, int page, int size) {
+        if (!ALLOWED_SORT_FIELDS.contains(sortField)) {
+            throw new InvalidSortFieldException(sortField, ALLOWED_SORT_FIELDS);
+        }
+        if (!ALLOWED_SORT_DIRECTIONS.contains(sortDirection)) {
+            throw new InvalidSortFieldException(sortDirection, ALLOWED_SORT_DIRECTIONS);
+        }
+
+        Sort.Direction direction = Sort.Direction.fromString(sortDirection.toUpperCase());
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+        return productRepository.search(categoryId, brandId, query, pageable).map(this::toResponse);
     }
 
     @Transactional
     public ProductResponse create(ProductCreateRequest request) {
+        validateLicenseType(request);
+
         if (productRepository.existsBySlug(request.slug())) {
             throw new ProductAlreadyExistsException(request.slug());
         }
@@ -99,6 +128,7 @@ public class ProductService {
         product.setSlug(request.slug());
         product.setDescription(request.description());
         product.setRequiresLicense(request.requiresLicense() != null ? request.requiresLicense() : false);
+        product.setLicenseType(request.licenseType());
         product.setBrand(brand);
         product.setCategory(category);
 
@@ -134,6 +164,8 @@ public class ProductService {
 
     @Transactional
     public ProductResponse update(Long id, ProductCreateRequest request) {
+        validateLicenseType(request);
+
         if (productRepository.existsBySlugAndIdNot(request.slug(), id)) {
             throw new ProductAlreadyExistsException(request.slug());
         }
@@ -151,6 +183,7 @@ public class ProductService {
         product.setSlug(request.slug());
         product.setDescription(request.description());
         product.setRequiresLicense(request.requiresLicense() != null ? request.requiresLicense() : false);
+        product.setLicenseType(request.licenseType());
         product.setBrand(brand);
         product.setCategory(category);
 
@@ -192,5 +225,11 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
         productRepository.delete(product);
+    }
+
+    private void validateLicenseType(ProductCreateRequest request) {
+        if (Boolean.TRUE.equals(request.requiresLicense()) && request.licenseType() == null) {
+            throw new LicenseTypeRequiredException();
+        }
     }
 }

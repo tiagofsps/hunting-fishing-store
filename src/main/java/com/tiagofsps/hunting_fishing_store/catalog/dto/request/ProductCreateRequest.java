@@ -1,5 +1,6 @@
 package com.tiagofsps.hunting_fishing_store.catalog.dto.request;
 
+import com.tiagofsps.hunting_fishing_store.catalog.entity.LicenseType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,6 +20,8 @@ public record ProductCreateRequest(
         String description,
 
         Boolean requiresLicense,
+
+        LicenseType licenseType,
 
         @NotNull
         Long categoryId,

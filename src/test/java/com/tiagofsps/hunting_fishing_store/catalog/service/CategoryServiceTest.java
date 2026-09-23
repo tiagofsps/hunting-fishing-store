@@ -20,6 +20,7 @@ import com.tiagofsps.hunting_fishing_store.catalog.dto.request.CategoryCreateReq
 import com.tiagofsps.hunting_fishing_store.catalog.dto.response.CategoryResponse;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Category;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.CategoryRepository;
+import com.tiagofsps.hunting_fishing_store.catalog.repository.ProductRepository;
 import com.tiagofsps.hunting_fishing_store.common.exception.CategoryAlreadyExistsException;
 import com.tiagofsps.hunting_fishing_store.common.exception.CategoryNotFoundException;
 
@@ -28,6 +29,9 @@ class CategoryServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private ProductRepository productRepository;
 
     @InjectMocks
     private CategoryService categoryService;
@@ -41,6 +45,7 @@ class CategoryServiceTest {
         category.setName("Fishing");
         category.setSlug("fishing");
         category.setDescription("Fishing gear");
+        lenient().when(productRepository.countProductsByCategory()).thenReturn(List.of());
     }
 
     @Test
@@ -74,6 +79,28 @@ class CategoryServiceTest {
         assertEquals(1, result.size());
         assertEquals("Fishing", result.getFirst().name());
         verify(categoryRepository).findAll();
+    }
+
+    @Test
+    @DisplayName("Should include productCount from the repository group query")
+    void shouldIncludeProductCount() {
+        when(productRepository.countProductsByCategory()).thenReturn(List.<Object[]>of(new Object[]{1L, 42L}));
+        when(categoryRepository.findAll()).thenReturn(List.of(category));
+
+        CategoryResponse response = categoryService.findAll().getFirst();
+
+        assertEquals(42L, response.productCount());
+        verify(productRepository).countProductsByCategory();
+    }
+
+    @Test
+    @DisplayName("Should default productCount to zero when category has no products")
+    void shouldDefaultProductCountToZero() {
+        when(categoryRepository.findAll()).thenReturn(List.of(category));
+
+        CategoryResponse response = categoryService.findAll().getFirst();
+
+        assertEquals(0L, response.productCount());
     }
 
     @Test
