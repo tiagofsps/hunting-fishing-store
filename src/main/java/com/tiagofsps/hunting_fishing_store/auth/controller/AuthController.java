@@ -2,11 +2,16 @@ package com.tiagofsps.hunting_fishing_store.auth.controller;
 
 import com.tiagofsps.hunting_fishing_store.auth.dto.LoginRequest;
 import com.tiagofsps.hunting_fishing_store.auth.dto.LoginResponse;
+import com.tiagofsps.hunting_fishing_store.auth.dto.RegisterResponse;
 import com.tiagofsps.hunting_fishing_store.auth.service.TokenService;
+import com.tiagofsps.hunting_fishing_store.config.security.AuthorizationUtil;
 import com.tiagofsps.hunting_fishing_store.config.security.CookieProvider;
+import com.tiagofsps.hunting_fishing_store.config.security.RateLimitService;
 import com.tiagofsps.hunting_fishing_store.user.dto.request.UserRegistrationRequest;
 import com.tiagofsps.hunting_fishing_store.user.dto.response.UserResponse;
 import com.tiagofsps.hunting_fishing_store.user.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -21,6 +26,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@Tag(name = "Authentication", description = "Login, registration, tokens and password reset")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -36,6 +43,8 @@ public class AuthController {
     private final UserDetailsService userDetailsService;
     private final UserService userService;
     private final CookieProvider cookieProvider;
+    private final RateLimitService rateLimitService;
+    private final AuthorizationUtil authorizationUtil;
 
     public AuthController(
             AuthenticationManager authenticationManager,
@@ -43,23 +52,41 @@ public class AuthController {
             JwtDecoder jwtDecoder,
             UserDetailsService userDetailsService,
             UserService userService,
-            CookieProvider cookieProvider) {
+            CookieProvider cookieProvider,
+            RateLimitService rateLimitService,
+            AuthorizationUtil authorizationUtil) {
         this.authenticationManager = authenticationManager;
         this.tokenService = tokenService;
         this.jwtDecoder = jwtDecoder;
         this.userDetailsService = userDetailsService;
         this.userService = userService;
         this.cookieProvider = cookieProvider;
+        this.rateLimitService = rateLimitService;
+        this.authorizationUtil = authorizationUtil;
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Return the authenticated user's profile")
+    public UserResponse me() {
+        String email = authorizationUtil.getAuthenticatedUser();
+        return userService.findByEmail(email);
     }
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse register(@Valid @RequestBody UserRegistrationRequest request) {
-        return userService.register(request);
+    @Operation(summary = "Create an account (auto-login, returns tokens + user)")
+    public RegisterResponse register(@Valid @RequestBody UserRegistrationRequest request, HttpServletResponse response) {
+        rateLimitService.check("email:" + request.email());
+        UserResponse user = userService.register(request);
+        LoginResponse tokens = tokenResponseWithCookie(user, "ROLE_USER", response);
+        return new RegisterResponse(user, tokens.accessToken(), tokens.tokenType());
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Authenticate and receive an access token + refresh cookie")
     public LoginResponse login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
+        rateLimitService.check("email:" + request.email());
+
         Authentication authentication = authenticationManager.authenticate(
                 UsernamePasswordAuthenticationToken.unauthenticated(request.email(), request.password()));
 
@@ -72,6 +99,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @Operation(summary = "Refresh the access token using the refresh cookie")
     public LoginResponse refresh(
             @CookieValue(value = "refresh_token", required = false) String refreshTokenCookie,
             HttpServletResponse response) {
@@ -109,6 +137,7 @@ public class AuthController {
 
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Revoke the refresh token and clear the cookie")
     public void logout(
             @CookieValue(value = "refresh_token", required = false) String refreshTokenCookie,
             HttpServletResponse response) {
@@ -132,13 +161,17 @@ public class AuthController {
     }
 
     private LoginResponse tokenResponseWithCookie(String username, String role, HttpServletResponse response) {
-        String accessToken = tokenService.generateAccessToken(username, role);
-        String refreshToken = tokenService.generateRefreshToken(username);
-        
+        return tokenResponseWithCookie(userService.findByEmail(username), role, response);
+    }
+
+    private LoginResponse tokenResponseWithCookie(UserResponse user, String role, HttpServletResponse response) {
+        String accessToken = tokenService.generateAccessToken(user.email(), role);
+        String refreshToken = tokenService.generateRefreshToken(user.email());
+
         // Set refresh token as secure HttpOnly cookie
         response.addHeader("Set-Cookie", cookieProvider.createRefreshTokenCookie(refreshToken).toString());
-        
-        return new LoginResponse(accessToken, "Bearer");
+
+        return new LoginResponse(accessToken, "Bearer", user.id(), user.role().name());
     }
 
     private Jwt decodeRefreshToken(String value) {

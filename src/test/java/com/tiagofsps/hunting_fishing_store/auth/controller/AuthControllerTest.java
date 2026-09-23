@@ -4,6 +4,7 @@ import com.tiagofsps.hunting_fishing_store.auth.service.TokenService;
 import com.tiagofsps.hunting_fishing_store.config.security.CookieProvider;
 import com.tiagofsps.hunting_fishing_store.user.dto.request.UserRegistrationRequest;
 import com.tiagofsps.hunting_fishing_store.user.dto.response.UserResponse;
+import com.tiagofsps.hunting_fishing_store.user.entity.Role;
 import com.tiagofsps.hunting_fishing_store.BaseControllerTest;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -44,8 +46,12 @@ class AuthControllerTest extends BaseControllerTest {
 
     @Test
     void shouldCreateAccount() throws Exception {
-        UserResponse response = new UserResponse(1L, "test@example.com", "John", "Doe", null, null, null, true, List.of());
+        UserResponse response = new UserResponse(1L, "test@example.com", "John", "Doe", null, null, null, true, List.of(), Role.USER);
         when(userService.register(any(UserRegistrationRequest.class))).thenReturn(response);
+        when(tokenService.generateAccessToken(eq("test@example.com"), anyString())).thenReturn("access-token");
+        when(tokenService.generateRefreshToken("test@example.com")).thenReturn("refresh-token");
+        when(cookieProvider.createRefreshTokenCookie("refresh-token")).thenReturn(
+                ResponseCookie.from("refresh_token", "refresh-token").build());
 
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -53,7 +59,24 @@ class AuthControllerTest extends BaseControllerTest {
                                 {"email":"test@example.com","password":"password123","firstName":"John","lastName":"Doe"}
                                 """))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value("test@example.com"));
+                .andExpect(jsonPath("$.user.email").value("test@example.com"))
+                .andExpect(jsonPath("$.accessToken").value("access-token"))
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(header().exists("Set-Cookie"));
+    }
+
+    @Test
+    void shouldReturnCurrentUser() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/me").with(userJwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("test@example.com"))
+                .andExpect(jsonPath("$.role").value("USER"));
+    }
+
+    @Test
+    void shouldRejectAnonymousMeRequest() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/me"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -78,6 +101,8 @@ class AuthControllerTest extends BaseControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value(accessToken))
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.userId").value(1))
+                .andExpect(jsonPath("$.role").value("USER"))
                 .andExpect(header().exists("Set-Cookie"));
     }
 
@@ -110,6 +135,8 @@ class AuthControllerTest extends BaseControllerTest {
                         .cookie(new Cookie("refresh_token", oldRefreshToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value(newAccessToken))
+                .andExpect(jsonPath("$.userId").value(1))
+                .andExpect(jsonPath("$.role").value("USER"))
                 .andExpect(header().exists("Set-Cookie"));
 
         verify(tokenService).revokeRefreshToken(tokenId);
