@@ -11,3 +11,8 @@ app:
   security:
     cookie:
       secure: true
+
+logging:
+  structured:
+    format:
+      console: ${STRUCTURED_LOG_FORMAT:ecs}
