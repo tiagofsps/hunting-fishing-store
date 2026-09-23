@@ -1,5 +1,7 @@
 package com.tiagofsps.hunting_fishing_store.user.dto.response;
 
+import com.tiagofsps.hunting_fishing_store.user.entity.Role;
+
 import java.util.List;
 
 public record UserResponse(
@@ -11,6 +13,7 @@ public record UserResponse(
         String huntingLicenseNumber,
         String fishingLicenseNumber,
         Boolean enabled,
-        List<AddressResponse> addresses
+        List<AddressResponse> addresses,
+        Role role
 ) {
 }

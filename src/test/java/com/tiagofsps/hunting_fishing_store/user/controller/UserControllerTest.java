@@ -2,6 +2,7 @@ package com.tiagofsps.hunting_fishing_store.user.controller;
 
 import com.tiagofsps.hunting_fishing_store.BaseControllerTest;
 import com.tiagofsps.hunting_fishing_store.user.dto.response.UserResponse;
+import com.tiagofsps.hunting_fishing_store.user.entity.Role;
 import com.tiagofsps.hunting_fishing_store.common.exception.UserNotFoundException;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,7 @@ class UserControllerTest extends BaseControllerTest {
 
     @Test
     void shouldFindUserById() throws Exception {
-        UserResponse response = new UserResponse(1L, "test@example.com", "John", "Doe", null, null, null, true, List.of());
+        UserResponse response = new UserResponse(1L, "test@example.com", "John", "Doe", null, null, null, true, List.of(), Role.USER);
         when(userService.findById(1L)).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/users/1").with(userJwt()))
