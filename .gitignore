@@ -57,3 +57,7 @@ coverage/
 
 # Generated reports
 reports/
+
+# Patch/merge artifacts
+*.orig
+*.rej
