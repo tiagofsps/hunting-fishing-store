@@ -26,7 +26,13 @@ The project implements a robust security architecture based on Spring Security 6
 - **Stateful Token Revocation**: Uses **Redis** to store and manage refresh token IDs. This allows for instant session revocation on logout or suspicious activity detection.
 - **RBAC (Role-Based Access Control)**:
   - Supports `ROLE_USER` and `ROLE_ADMIN`.
-  - Granular access control using `@EnableMethodSecurity`.
+  - Granular access control using `@EnableMethodSecurity` (`@PreAuthorize("hasRole('ADMIN')")`).
+  - **Public catalog reads**: `GET` on products, brands, categories and promotions is open to everyone; all write operations are admin-only.
+- **Rate Limiting**: Redis-backed sliding-window throttling.
+  - A servlet filter limits **per-IP** attempts on the public POST endpoints (`/auth/login`, `/auth/register`, `/auth/refresh`, `/auth/forgot-password`, `/newsletter/subscribe`) and returns `429 Too Many Requests`.
+  - **Per-email** limits are enforced in the controllers for login, register and forgot-password (no account enumeration).
+- **CORS**: Configurable allowed origins (`CORS_ALLOWED_ORIGINS`, comma-separated), credentials enabled, `Authorization`/`Content-Type` headers.
+- **Admin Seeding**: On an empty database, 20 demo users are seeded. If `ADMIN_EMAIL`/`ADMIN_PASSWORD` are set, an admin account is created too (required in `prod`).
 - **Encryption**: Passwords are hashed using **BCrypt** with a configurable strength.
 - **Protection**:
   - **HSTS** (HTTP Strict Transport Security) enabled.
@@ -45,6 +51,7 @@ src/main/java/com/tiagofsps/hunting_fishing_store/
 ├── common/         # Shared utilities and exception handling
 ├── config/         # Security, Redis, and App configurations
 ├── coupon/         # Coupon management
+├── newsletter/     # Newsletter subscriptions
 ├── order/          # Order processing and checkout
 ├── payment/        # Payment integration
 ├── promotion/      # Campaign and promotion logic
@@ -66,12 +73,11 @@ The API base path is `/api/v1`. Interactive docs are available on Swagger UI (`/
 
 ### Users
 - `GET /users` - [ADMIN] Paginated user list (`page`, `size`, `sort`)
-- `GET /users/{id}` - Get user profile
-- `GET /users/{id}/orders` - List a user's orders
+- `GET /users/{id}` - Get user profile (owner or ADMIN; includes addresses and role)
 - `POST /users/{id}/addresses` - Add an address to a user
-- `GET /users/{id}/addresses` - List a user's addresses
+- `PUT /users/{id}/addresses/{addressId}` - Update an address
 - `DELETE /users/{id}/addresses/{addressId}` - Delete an address
-- `PATCH /users/{id}/password` - Change password
+- `POST /users/{id}/password` - Change password (owner-only)
 - `PUT /users/{id}` - Update profile
 
 ### Catalog Management
@@ -101,7 +107,7 @@ The API base path is `/api/v1`. Interactive docs are available on Swagger UI (`/
 
 #### Stock & Inventory
 - `POST /stock-movements` - [ADMIN] Record a stock movement
-- `GET /stock-movements/item/{productItemId}` - List movements for a product item
+- `GET /stock-movements/item/{productItemId}` - [ADMIN] List movements for a product item
 
 ### Shopping Cart
 - `GET /carts/{userId}` - Retrieve user cart
@@ -115,12 +121,28 @@ The API base path is `/api/v1`. Interactive docs are available on Swagger UI (`/
 - `GET /orders/user/{userId}` - List user's order history
 - `GET /orders/{orderNumber}` - Get order details by order number
 - `GET /orders` - [ADMIN] Paginated order list with optional `status` filter (`page`, `size`, `sort`)
+- `PATCH /orders/{orderNumber}/status?status=...` - [ADMIN] Transition an order status
+
+Checkout rules:
+- **Stock validation**: every line item is checked against available stock before anything is persisted; insufficient stock aborts the whole checkout.
+- **License enforcement**: products flagged `requiresLicense` can only be purchased by users whose profile carries the matching license number (`huntingLicenseNumber` for `HUNTING` products, `fishingLicenseNumber` for `FISHING`; legacy products without a `licenseType` accept either).
+- **Shipping**: a flat fee (`SHIPPING_FEE`) applies below the free-shipping threshold (`SHIPPING_FREE_THRESHOLD`), computed on the subtotal before coupon discount.
+- **Coupons**: an optional `couponCode` is validated and applied; usage is recorded.
+- **Status transitions** are enforced: `PENDING → PAID|CANCELLED`, `PAID → SHIPPED|CANCELLED`, `SHIPPED → DELIVERED`; `DELIVERED` and `CANCELLED` are terminal. Cancelling an order records reverse stock movements (`RETURN`) for every line item.
 
 ### Payments
 - `POST /payments` - Initiate a payment (amount is read from the order server-side, never from the client)
 - `GET /payments/{id}` - Get payment status
 - `PATCH /payments/{id}/status` - [ADMIN] Update payment status
 - `POST /payments/webhook` - Provider webhook callback (signature-verified)
+
+Supported methods: `MBWAY` (requires `mbwayPhone`), `MULTIBANCO` (returns `multibancoEntity`/`multibancoReference` with a 48h expiry), `CREDIT_CARD` and `KLARNA` (returns a hosted `paymentUrl`). The gateway is pluggable via `PAYMENT_GATEWAY` (default `stub`).
+
+Behavior:
+- A payment can only be initiated for a `PENDING` order, and only one pending payment per order is allowed.
+- Completing a payment (admin update or webhook) transitions the order to `PAID`.
+- The webhook is idempotent: re-deliveries after a successful completion are ignored.
+- Overdue `PENDING` Multibanco references are marked `EXPIRED` by a scheduled job (default hourly, `PAYMENT_EXPIRY_CRON`).
 
 ### Discounts & Marketing
 
@@ -177,6 +199,12 @@ Set `SPRING_MAIL_HOST`/`SPRING_MAIL_PORT`/`SPRING_MAIL_USERNAME`/`SPRING_MAIL_PA
 | `COOKIE_SECURE` / `COOKIE_SAME_SITE` | `false` / `Strict` | Refresh-token cookie flags |
 | `SHIPPING_FREE_THRESHOLD` / `SHIPPING_FEE` | `75` / `4.95` | Free-shipping threshold and flat fee |
 | `PASSWORD_RESET_BASE_URL` | `http://localhost:5173/reset-password` | Frontend base URL used in reset emails |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | *(empty)* | Seed an admin account on an empty database (required in `prod`) |
+| `PAYMENT_GATEWAY` | `stub` | Payment gateway implementation (`stub` for now) |
+| `PAYMENT_WEBHOOK_SECRET` | `local-webhook-secret-change-me` | Shared secret used to verify webhook signatures |
+| `PAYMENT_CHECKOUT_BASE_URL` | `http://localhost:5173` | Base URL for hosted checkout (KLARNA/CREDIT_CARD) |
+| `PAYMENT_MULTIBANCO_ENTITY` / `PAYMENT_MULTIBANCO_EXPIRY_HOURS` | `21345` / `48` | Multibanco entity and reference expiry window |
+| `PAYMENT_EXPIRY_CRON` | `0 0 * * * *` | Cron schedule for expiring overdue Multibanco references |
 | `MAIL_FROM` | — | Sender address for emails |
 | `SPRING_MAIL_HOST` / `SPRING_MAIL_PORT` / `SPRING_MAIL_USERNAME` / `SPRING_MAIL_PASSWORD` | *(empty)* | SMTP settings (emails disabled when host empty) |
 | `STRUCTURED_LOG_FORMAT` | `ecs` | Structured log format in `prod` |
@@ -188,7 +216,8 @@ Field names in API responses follow backend domain terms. Map them to frontend d
 - **Promotions**: `name` → promo title, `discountValue` → discount percentage, `validFrom` → start date, `validTo` → end date.
 - **Categories** include `productCount` → admin/dashboard category listings.
 - **Products list** returns a Spring `Page` envelope — the frontend must read `content`, `totalElements`, `totalPages` (not a plain array).
-- **Payments**: the total is always taken from the server-side order; never display or send a client-supplied amount.
+- **Payments**: the total is always taken from the server-side order; never display or send a client-supplied amount. `paymentMethod` values are `MBWAY`, `MULTIBANCO`, `CREDIT_CARD`, `KLARNA`; MBWAY payments require `mbwayPhone`.
+- **Licenses**: `huntingLicenseNumber`/`fishingLicenseNumber` on the user profile are required to purchase regulated products (`requiresLicense`); prompt users to fill them in before checkout.
 
 ## Development Setup
 
