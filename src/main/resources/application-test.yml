@@ -32,3 +32,6 @@ app:
   security:
     cookie:
       secure: false
+  rate-limit:
+    max-attempts: 10000
+    window-seconds: 10000

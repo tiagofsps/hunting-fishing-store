@@ -1,5 +1,7 @@
 package com.tiagofsps.hunting_fishing_store.config.security;
 
+import com.tiagofsps.hunting_fishing_store.user.entity.User;
+import com.tiagofsps.hunting_fishing_store.user.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -7,32 +9,36 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthorizationUtil {
 
+    private final UserRepository userRepository;
+
+    public AuthorizationUtil(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
     /**
      * Checks if the authenticated user is authorized to access a resource.
      * Admins have access to all resources, regular users only their own.
+     * The decision is ID-based: the authenticated principal's own user id
+     * (resolved from the authenticated email) must match the resource owner id.
      *
      * @param requestedResourceOwnerId The ID of the resource owner
-     * @param userEmail The email of the resource owner to verify
+     * @param userEmail The email of the resource owner (kept for call compatibility; the decision is ID-based)
      * @return true if authorized, false otherwise
      */
     public boolean isAuthorizedToAccess(Long requestedResourceOwnerId, String userEmail) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
-        if (authentication == null || !authentication.isAuthenticated()) {
+
+        if (authentication == null || !authentication.isAuthenticated() || requestedResourceOwnerId == null) {
             return false;
         }
 
-        // Check if user is admin
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-        
-        if (isAdmin) {
+        if (isAdmin()) {
             return true;
         }
 
-        // Check if user owns the resource
-        String authenticatedUser = authentication.getName();
-        return authenticatedUser.equals(userEmail);
+        // The authenticated principal's name is the user's email.
+        User authenticatedUser = userRepository.findByEmail(authentication.getName()).orElse(null);
+        return authenticatedUser != null && authenticatedUser.getId().equals(requestedResourceOwnerId);
     }
 
     /**
@@ -42,7 +48,7 @@ public class AuthorizationUtil {
      */
     public boolean isAdmin() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
+
         if (authentication == null || !authentication.isAuthenticated()) {
             return false;
         }
@@ -58,7 +64,7 @@ public class AuthorizationUtil {
      */
     public String getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
+
         if (authentication == null || !authentication.isAuthenticated()) {
             return null;
         }

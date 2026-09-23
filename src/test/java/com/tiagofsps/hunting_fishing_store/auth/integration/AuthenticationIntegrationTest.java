@@ -71,9 +71,9 @@ class AuthenticationIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldRejectAccessWithoutAuthorizationHeader() throws Exception {
+    void shouldAllowAnonymousCatalogAccess() throws Exception {
         mockMvc.perform(get("/api/v1/brands"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isOk());
     }
 
     @Test
