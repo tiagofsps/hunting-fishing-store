@@ -1,10 +1,10 @@
 # Hunting & Fishing Store
 
-A modern e-commerce platform for hunting and fishing equipment, built with Spring Boot 3 and Java 21.
+A modern e-commerce platform for hunting and fishing equipment, built with Spring Boot 4 and Java 21.
 
 ## Tech Stack
 
-- **Backend**: Java 21, Spring Boot 3.4
+- **Backend**: Java 21, Spring Boot 4.1
 - **Security**: Spring Security, OAuth2 Resource Server (JWT)
 - **Database**: PostgreSQL (Primary), Redis (Token storage/Revocation)
 - **ORM**: Spring Data JPA / Hibernate
