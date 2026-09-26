@@ -253,3 +253,9 @@ Convenience targets (require `make` and a `psql` client on the host; no Docker C
 - `make db-shell` - Open an interactive `psql` session.
 
 Seeding only runs on an empty database in the `dev` profile, so `make db-seed` after a reset reproduces a consistent dataset.
+
+## Documentation
+
+- [Development Guide](docs/development.md) - profiles, running the app, database lifecycle, configuration, and common pitfalls.
+- [Testing Guide](docs/testing.md) - test tiers, base classes, commands, and how to write tests.
+- [Architecture](docs/architecture/README.md) - domain model, technology stack, design decisions, and coding conventions.
