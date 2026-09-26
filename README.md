@@ -32,12 +32,23 @@ The project implements a robust security architecture based on Spring Security 6
   - A servlet filter limits **per-IP** attempts on the public POST endpoints (`/auth/login`, `/auth/register`, `/auth/refresh`, `/auth/forgot-password`, `/newsletter/subscribe`) and returns `429 Too Many Requests`.
   - **Per-email** limits are enforced in the controllers for login, register and forgot-password (no account enumeration).
 - **CORS**: Configurable allowed origins (`CORS_ALLOWED_ORIGINS`, comma-separated), credentials enabled, `Authorization`/`Content-Type` headers.
-- **Admin Seeding**: On an empty database, 20 demo users are seeded. If `ADMIN_EMAIL`/`ADMIN_PASSWORD` are set, an admin account is created too (required in `prod`).
+- **Seeding**: On an empty database, 20 demo users are seeded plus two fixed demo accounts (see [Demo Accounts](#demo-accounts)). `ADMIN_EMAIL`/`ADMIN_PASSWORD` override the admin account's credentials (required in `prod`).
 - **Encryption**: Passwords are hashed using **BCrypt** with a configurable strength.
 - **Protection**:
   - **HSTS** (HTTP Strict Transport Security) enabled.
   - **Frame Options** set to `DENY` to prevent Clickjacking.
   - **CSRF** disabled for the stateless API.
+
+## Demo Accounts
+
+On a fresh database (dev profile), the seeder creates two fixed accounts with the generic password `Password123!`:
+
+| Account | Email | Role | Notes |
+|---|---|---|---|
+| Admin | `admin@huntingfishing.com` | `ROLE_ADMIN` | Full admin access; credentials overridable via `ADMIN_EMAIL`/`ADMIN_PASSWORD` |
+| User | `user@huntingfishing.com` | `ROLE_USER` | Includes demo hunting (`DEMO-HUNT-0001`) and fishing (`DEMO-FISH-0001`) licenses plus shipping/billing addresses |
+
+The 20 additional demo users share the password `password123`.
 
 ## Project Structure
 
@@ -199,7 +210,7 @@ Set `SPRING_MAIL_HOST`/`SPRING_MAIL_PORT`/`SPRING_MAIL_USERNAME`/`SPRING_MAIL_PA
 | `COOKIE_SECURE` / `COOKIE_SAME_SITE` | `false` / `Strict` | Refresh-token cookie flags |
 | `SHIPPING_FREE_THRESHOLD` / `SHIPPING_FEE` | `75` / `4.95` | Free-shipping threshold and flat fee |
 | `PASSWORD_RESET_BASE_URL` | `http://localhost:5173/reset-password` | Frontend base URL used in reset emails |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | *(empty)* | Seed an admin account on an empty database (required in `prod`) |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | *(empty)* | Override the seeded admin account's credentials (default `admin@huntingfishing.com` / `Password123!`); required in `prod` |
 | `PAYMENT_GATEWAY` | `stub` | Payment gateway implementation (`stub` for now) |
 | `PAYMENT_WEBHOOK_SECRET` | `local-webhook-secret-change-me` | Shared secret used to verify webhook signatures |
 | `PAYMENT_CHECKOUT_BASE_URL` | `http://localhost:5173` | Base URL for hosted checkout (KLARNA/CREDIT_CARD) |
