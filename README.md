@@ -242,3 +242,14 @@ Starts PostgreSQL 17 and Redis 7.
 ```bash
 ./mvnw spring-boot:run
 ```
+
+### 3. Reset / Seed the Database
+
+Convenience targets (require `make` and a `psql` client on the host; no Docker CLI needed):
+
+- `make db-reset` - **Destructive**: drops and recreates the database (data loss). Credentials default to the `.env.example` values and can be overridden via `POSTGRES_*` env vars or a `.env` file.
+- `make db-seed` - Reset the database, then start the app so the dev seeders run (demo users + fixed accounts + catalog).
+- `make db-setup` - Alias for `db-seed`.
+- `make db-shell` - Open an interactive `psql` session.
+
+Seeding only runs on an empty database in the `dev` profile, so `make db-seed` after a reset reproduces a consistent dataset.
