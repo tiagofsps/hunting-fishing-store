@@ -106,7 +106,9 @@ public class ProductService {
 
         Sort.Direction direction = Sort.Direction.fromString(sortDirection.toUpperCase());
         PageRequest pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
-        return productRepository.search(categoryId, brandId, query, pageable).map(this::toResponse);
+        return productRepository
+                .findAll(ProductRepository.search(categoryId, brandId, query), pageable)
+                .map(this::toResponse);
     }
 
     @Transactional

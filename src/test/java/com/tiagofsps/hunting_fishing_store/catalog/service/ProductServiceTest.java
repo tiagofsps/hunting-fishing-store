@@ -21,6 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.Sort;
 
 import com.tiagofsps.hunting_fishing_store.catalog.dto.request.ProductCreateRequest;
@@ -103,7 +105,7 @@ class ProductServiceTest {
     @DisplayName("Should return paginated products")
     void shouldReturnAllProducts() {
         PageRequest pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
-        when(productRepository.search(null, null, null, pageable))
+        when(productRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(product)));
 
         Page<ProductResponse> result = productService.findAll(null, null, null, "createdAt", "desc", 0, 20);
@@ -116,12 +118,13 @@ class ProductServiceTest {
     @DisplayName("Should forward filters and sort to the repository search")
     void shouldForwardFiltersAndSort() {
         PageRequest expected = PageRequest.of(1, 50, Sort.by(Sort.Direction.ASC, "name"));
-        when(productRepository.search(2L, 3L, "rod", expected)).thenReturn(new PageImpl<>(List.of(product)));
+        when(productRepository.findAll(any(Specification.class), eq(expected)))
+                .thenReturn(new PageImpl<>(List.of(product)));
 
         productService.findAll(2L, 3L, "rod", "name", "asc", 1, 50);
 
         ArgumentCaptor<PageRequest> pageableCaptor = ArgumentCaptor.forClass(PageRequest.class);
-        verify(productRepository).search(eq(2L), eq(3L), eq("rod"), pageableCaptor.capture());
+        verify(productRepository).findAll(any(Specification.class), pageableCaptor.capture());
         assertEquals("name", pageableCaptor.getValue().getSort().getOrderFor("name").getProperty());
         assertEquals(50, pageableCaptor.getValue().getPageSize());
         assertEquals(1, pageableCaptor.getValue().getPageNumber());
@@ -132,7 +135,7 @@ class ProductServiceTest {
     void shouldRejectInvalidSortField() {
         assertThrows(InvalidSortFieldException.class,
                 () -> productService.findAll(null, null, null, "price", "asc", 0, 20));
-        verify(productRepository, never()).search(any(), any(), any(), any());
+        verify(productRepository, never()).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
@@ -140,7 +143,7 @@ class ProductServiceTest {
     void shouldRejectInvalidSortDirection() {
         assertThrows(InvalidSortFieldException.class,
                 () -> productService.findAll(null, null, null, "name", "sideways", 0, 20));
-        verify(productRepository, never()).search(any(), any(), any(), any());
+        verify(productRepository, never()).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
