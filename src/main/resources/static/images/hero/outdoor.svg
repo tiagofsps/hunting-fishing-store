@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000" role="img" aria-label="Hunting and fishing outdoors">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#3b5a45"/>
+      <stop offset="0.55" stop-color="#24352e"/>
+      <stop offset="1" stop-color="#192723"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#bg)"/>
+  <circle cx="585" cy="270" r="85" fill="#82a088" opacity="0.30"/>
+  <g fill="none" stroke="#82a088" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="0.45" transform="translate(400,430) scale(1.35)">
+    <path d="M -190 115 L -65 -95 L 5 15 L 65 -65 L 190 115 Z"/>
+    <path d="M -190 115 H 190"/>
+  </g>
+  <g fill="none" stroke="#82a088" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.35" transform="translate(400,700)">
+    <path d="M -110 0 C -72 -58, 44 -58, 108 0 C 44 58, -72 58, -110 0 Z"/>
+    <path d="M 108 0 L 155 -40 L 155 40 Z"/>
+  </g>
+</svg>

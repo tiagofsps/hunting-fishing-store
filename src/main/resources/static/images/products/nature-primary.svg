@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="OUTDOOR gear placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b5a45"/>
+      <stop offset="1" stop-color="#192723"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <g fill="none" stroke="#82a088" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.40" transform="translate(400,300)">
+    
+      <g>
+        <path d="M -190 115 L -65 -95 L 5 15 L 65 -65 L 190 115 Z"/>
+        <circle cx="115" cy="-125" r="35"/>
+      </g>
+  </g>
+</svg>

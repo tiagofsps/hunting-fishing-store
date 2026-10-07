@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="CAMPING gear detail placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f3f6f5"/>
+      <stop offset="1" stop-color="#e2e9e6"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <rect x="28" y="28" width="744" height="544" rx="28" fill="none" stroke="#3b5a45" stroke-width="3" opacity="0.25"/>
+  <circle cx="400" cy="300" r="195" fill="#82a088" opacity="0.20"/>
+  <g fill="none" stroke="#3b5a45" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.55" transform="translate(400,300) scale(0.78)">
+    
+      <g>
+        <path d="M -160 110 L 0 -120 L 160 110"/>
+        <path d="M -45 110 L 0 -15 L 45 110"/>
+        <path d="M -210 110 H 210"/>
+      </g>
+  </g>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="FISHING gear detail placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f3f6f5"/>
+      <stop offset="1" stop-color="#e2e9e6"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <rect x="28" y="28" width="744" height="544" rx="28" fill="none" stroke="#3b5a45" stroke-width="3" opacity="0.25"/>
+  <circle cx="400" cy="300" r="195" fill="#82a088" opacity="0.20"/>
+  <g fill="none" stroke="#3b5a45" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.55" transform="translate(400,300) scale(0.78)">
+    
+      <g transform="translate(-32,0)">
+        <path d="M -150 0 C -100 -80, 60 -80, 150 0 C 60 80, -100 80, -150 0 Z"/>
+        <path d="M 150 0 L 215 -55 L 215 55 Z"/>
+        <circle cx="-95" cy="-18" r="9" fill="none" stroke="none"/>
+      </g>
+  </g>
+</svg>

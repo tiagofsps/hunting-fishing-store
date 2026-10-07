@@ -140,7 +140,7 @@ public class CatalogSeeder implements Seeder {
         
         // Primary Image
         ProductImage primary = new ProductImage();
-        primary.setImageUrl("https://loremflickr.com/800/600/" + keyword + "?lock=" + product.getId() + "1");
+        primary.setImageUrl("/images/products/" + keyword + "-primary.svg");
         primary.setAltText(product.getName());
         primary.setIsPrimary(true);
         primary.setDisplayOrder(0);
@@ -149,7 +149,7 @@ public class CatalogSeeder implements Seeder {
 
         // Secondary Image
         ProductImage secondary = new ProductImage();
-        secondary.setImageUrl("https://loremflickr.com/800/600/" + keyword + "?lock=" + product.getId() + "2");
+        secondary.setImageUrl("/images/products/" + keyword + "-detail.svg");
         secondary.setAltText(product.getName() + " details");
         secondary.setIsPrimary(false);
         secondary.setDisplayOrder(1);
