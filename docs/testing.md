@@ -4,16 +4,19 @@ How the Hunting & Fishing Store test suite is organized and how to run it.
 
 ## Overview
 
-The suite contains **302 `@Test` methods across 56 files**, split into four tiers that mirror the feature packages under `src/test/java/com/tiagofsps/hunting_fishing_store/<feature>/`:
+The suite contains **319 `@Test` methods across 53 test classes** (plus four
+shared base classes), split into tiers that mirror the feature packages under
+`src/test/java/com/tiagofsps/hunting_fishing_store/<feature>/`:
 
-| Tier | Files | Spring context | Requires Docker |
+| Tier | Classes | Spring context | Requires Docker |
 | --- | --- | --- | --- |
-| Unit tests (Mockito) | 14 | No | No |
+| Unit tests (JUnit 5, Mockito where needed) | 16 | No | No |
 | Repository tests (`@DataJpaTest`) | 10 | Sliced | Yes |
 | Controller tests (MockMvc) | 11 | Full | Yes |
-| Integration tests (`@SpringBootTest`) | 12 | Full | Yes |
+| Integration tests (`@SpringBootTest`) | 14 | Full | Yes |
+| Other container-backed (Flyway, rate limiting) | 2 | Full | Yes |
 
-Plus security-config tests, a Flyway migration test, and the application context test — 36 container-backed test classes in total.
+37 of the 53 test classes are container-backed; the rest are plain unit tests.
 
 ## Base Classes
 

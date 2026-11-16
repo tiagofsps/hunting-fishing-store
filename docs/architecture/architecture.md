@@ -13,60 +13,37 @@ The project is implemented as a **Modular Monolith**, where all modules are depl
 # Package Structure
 
 ```text
-src/main/java/com/tiagofsps/store
-
+src/main/java/com/tiagofsps/hunting_fishing_store
+├── HuntingFishingStoreApplication.java
 ├── common/
-│   ├── config/
-│   ├── exception/
-│   ├── security/
-│   └── util/
-│
-├── catalog/
-│   ├── controller/
-│   ├── service/
-│   ├── repository/
-│   ├── model/
-│   ├── dto/
-│   ├── mapper/
-│   └── specification/
-│
-├── user/
-│   ├── controller/
-│   ├── service/
-│   ├── repository/
-│   ├── model/
-│   └── dto/
-│
+│   ├── dto/            # Shared response records
+│   ├── exception/      # Domain exceptions + global handler
+│   ├── mapper/         # Reusable mappers (addresses)
+│   ├── seeding/        # Seeder contract
+│   └── service/        # Shared services (mail)
+├── config/
+│   ├── security/       # Filter chain, JWT, rate limiting, cookies
+│   ├── OpenApiConfig.java
+│   ├── PaymentProperties.java
+│   ├── SeedDataConfig.java
+│   └── ShippingProperties.java
+├── auth/               # controller · service · repository · entity · dto
 ├── cart/
-│   ├── controller/
-│   ├── service/
-│   ├── repository/
-│   ├── model/
-│   └── dto/
-│
+├── catalog/            # + seeding/ (demo catalog)
+├── coupon/
+├── newsletter/
 ├── order/
-│   ├── controller/
-│   ├── service/
-│   ├── repository/
-│   ├── model/
-│   └── dto/
-│
-├── payment/
-│   ├── controller/
-│   ├── service/
-│   ├── repository/
-│   ├── model/
-│   └── dto/
-│
+├── payment/            # + gateway/ (pluggable payment gateway)
 ├── promotion/
-│   ├── controller/
-│   ├── service/
-│   ├── repository/
-│   ├── model/
-│   └── dto/
-│
-└── HuntingFishingStoreApplication.java
+└── user/               # + seeding/ (demo users)
 ```
+
+Every feature package uses the same sub-structure:
+
+```text
+<feature>/{controller, service, repository, entity, dto/{request,response}}
+```
+
 
 ---
 
@@ -79,10 +56,8 @@ Each feature contains all the components required to implement its own functiona
 * Controllers
 * Services
 * Repositories
-* Domain models (JPA entities)
-* DTOs
-* Mappers
-* Query specifications (when required)
+* JPA entities
+* Request/response DTOs
 
 This approach keeps related code close together and reduces navigation across unrelated packages.
 
@@ -130,9 +105,10 @@ Repositories should:
 
 ---
 
-## Model
+## Entity
 
-Contains the domain model represented as JPA entities.
+Contains the domain model represented as JPA entities under the feature's
+`entity/` package.
 
 Entities define:
 
@@ -146,43 +122,44 @@ They should avoid containing application service logic.
 
 ## DTO
 
-Data Transfer Objects used for communication with external clients.
+Data Transfer Objects used for communication with external clients, under
+`dto/request/` and `dto/response/`.
 
-DTOs isolate the API contract from the persistence model and prevent exposing JPA entities directly.
-
----
-
-## Mapper
-
-Responsible for converting between entities and DTOs.
-
-Keeping mapping logic isolated improves readability and maintainability.
+DTOs are Java records and isolate the API contract from the persistence model;
+JPA entities are never exposed directly.
 
 ---
 
-## Specification
+## Mapping
 
-Contains Spring Data JPA Specifications used to build dynamic and composable database queries.
+Entity ↔ DTO mapping lives in the service layer, next to the business rules
+that produce it. A small shared mapper under `common/mapper` covers shapes used
+across features (currently the address mapper).
 
-This package is optional and only used when filtering or searching becomes sufficiently complex.
+---
+
+## Query specifications
+
+Dynamic filtering — for example product search — is expressed as a Spring Data
+JPA `Specification` built inline in the repository interface, keeping the
+criteria close to the query they describe.
 
 ---
 
 # Shared Infrastructure
 
-The `common` package contains infrastructure shared across all modules.
+The `common` package contains infrastructure shared across all modules, and the
+`config` package holds application wiring that is global rather than per-feature.
 
 Typical components include:
 
-* Spring configuration
-* Security configuration
-* JWT authentication
-* Global exception handling
-* Utility classes
-* Shared base entities
-* Common constants
+* Shared DTOs and the `BaseEntity` audit fields
+* Domain exceptions and the global exception handler
+* Shared services (mail) and the seeding contract
+* Spring Security configuration (filter chain, JWT, rate limiting, cookies)
+* Payment/shipping properties and seed orchestration
 
-The `common` package should not contain business logic.
+Neither package should contain feature business logic.
 
 ---
 

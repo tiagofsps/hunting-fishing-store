@@ -4,10 +4,8 @@ This directory contains the architectural documentation for the Hunting & Fishin
 
 ## Contents
 
-- Domain Model
-- Technology Stack
-- Project Structure
-- Design Decisions
-- Coding Conventions
-- Development Roadmap
-- Architecture Decision Records (ADRs)
+- [Architecture](architecture.md) — layered architecture, package structure and request flow
+- [Domain Model](domain-model.md) — entities, relationships and localization
+- [Technology Stack](technology-stack.md) — languages, frameworks and infrastructure
+- [Design Decisions](design-decisions.md) — decisions that shaped the codebase
+- [Coding Conventions](coding-conventions.md) — naming, layering and API conventions

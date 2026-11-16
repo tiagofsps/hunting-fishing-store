@@ -11,6 +11,17 @@ All main entities include the following audit fields:
 
 ---
 
+## Localization
+
+Category and product content is stored per locale in `category_translations`
+and `product_translations`, each unique on `(entity_id, locale)`. The canonical
+`name`/`description` columns remain as the fallback for legacy clients; `en` is
+the canonical locale. Supported locales: `en`, `pt`. Product search matches the
+localized name/description selected by `Accept-Language`, coalescing back to the
+canonical column when a translation is missing.
+
+---
+
 # 1. Product Catalog Domain
 
 ## Brand
@@ -46,6 +57,26 @@ All main entities include the following audit fields:
 
 * Many-to-One → `Category` (Parent Category)
 * One-to-Many → `Category` (Child Categories)
+* One-to-Many → `CategoryTranslation`
+
+---
+
+## CategoryTranslation
+
+### Fields
+
+| Field         | Type       | Notes                        |
+| ------------- | ---------- | ---------------------------- |
+| `id`          | `Long`     | Primary Key                  |
+| `locale`      | `String`   | `en` or `pt`                 |
+| `name`        | `String`   | Localized name               |
+| `description` | `String`   | Localized description        |
+
+### Relationships
+
+* Many-to-One → `Category`
+
+Unique constraint on `(category_id, locale)`.
 
 ---
 
@@ -67,6 +98,26 @@ All main entities include the following audit fields:
 * Many-to-One → `Brand`
 * One-to-Many → `ProductItem`
 * One-to-Many → `ProductImage`
+* One-to-Many → `ProductTranslation`
+
+---
+
+## ProductTranslation
+
+### Fields
+
+| Field         | Type       | Notes                 |
+| ------------- | ---------- | --------------------- |
+| `id`          | `Long`     | Primary Key           |
+| `locale`      | `String`   | `en` or `pt`          |
+| `name`        | `String`   | Localized name        |
+| `description` | `Text`     | Localized description |
+
+### Relationships
+
+* Many-to-One → `Product`
+
+Unique constraint on `(product_id, locale)`.
 
 ---
 
