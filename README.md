@@ -1,5 +1,9 @@
 # Hunting & Fishing Store
 
+![CI](https://github.com/tiagofsps/hunting-fishing-store/actions/workflows/ci.yml/badge.svg)
+![Java 21](https://img.shields.io/badge/Java-21-blue)
+![Spring Boot 4.1](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F)
+
 A modern e-commerce platform for hunting and fishing equipment, built with Spring Boot 4 and Java 21.
 
 ## Tech Stack
