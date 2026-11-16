@@ -259,3 +259,11 @@ Seeding only runs on an empty database in the `dev` profile, so `make db-seed` a
 - [Development Guide](docs/development.md) - profiles, running the app, database lifecycle, configuration, and common pitfalls.
 - [Testing Guide](docs/testing.md) - test tiers, base classes, commands, and how to write tests.
 - [Architecture](docs/architecture/README.md) - domain model, technology stack, design decisions, and coding conventions.
+
+## License / Usage
+
+This repository is published for **portfolio and review purposes only** and is
+**not open source**. It is proprietary: all rights reserved. See [LICENSE](LICENSE)
+for the full notice. No permission is granted to use, copy, modify, or
+distribute the code without prior written permission from the copyright holder.
+
