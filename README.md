@@ -386,6 +386,11 @@ The suite is split into four tiers that mirror the feature packages:
 ./mvnw clean verify    # what CI runs
 ```
 
+`verify` also writes a JaCoCo coverage report to
+`target/site/jacoco/index.html`; CI uploads it alongside the surefire reports.
+The build fails fast on the wrong toolchain: Maven Enforcer requires Java 21+
+and Maven 3.9+.
+
 The container-backed tiers extend `AbstractContainerBaseTest`, which starts a
 PostgreSQL and a Redis container once per JVM and wires them via
 `@ServiceConnection`. See the [Testing Guide](docs/testing.md) for the base
