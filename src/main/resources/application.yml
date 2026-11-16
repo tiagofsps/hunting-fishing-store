@@ -59,6 +59,8 @@ app:
     from: ${MAIL_FROM:}
   payment:
     gateway: ${PAYMENT_GATEWAY:stub}
+    # Dev placeholder so signed webhooks are testable locally; override
+    # PAYMENT_WEBHOOK_SECRET in any real deployment.
     webhook-secret: ${PAYMENT_WEBHOOK_SECRET:local-webhook-secret-change-me}
     checkout-base-url: ${PAYMENT_CHECKOUT_BASE_URL:http://localhost:5173}
     multibanco:

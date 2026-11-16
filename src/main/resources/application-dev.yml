@@ -10,7 +10,12 @@ spring:
 
 app:
   jwt:
-    secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    # Throwaway signing key so `docker compose up -d && ./mvnw spring-boot:run`
+    # works with zero configuration. It is public knowledge and must never be
+    # used outside local development; set JWT_SECRET_KEY to override it. The
+    # prod profile does not inherit this value, so a real deployment has to
+    # supply JWT_SECRET_KEY or fail to start.
+    secret: ${JWT_SECRET_KEY:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
   security:
     cookie:
       secure: false

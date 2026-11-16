@@ -16,7 +16,7 @@ The active profile defaults to `dev` and can be overridden with `SPRING_PROFILES
 
 | Profile | Purpose | Notable behavior |
 | --- | --- | --- |
-| `dev` (default) | Local development | SQL logging enabled, seeders run on an empty database, cookies not marked secure, dev JWT secret |
+| `dev` (default) | Local development | SQL logging enabled, seeders run on an empty database, cookies not marked secure, committed throwaway JWT secret (overridable with `JWT_SECRET_KEY`) |
 | `test` | Automated tests | `ddl-auto: create-drop`, Testcontainers provide Postgres/Redis, rate limiting relaxed, cookies not marked secure |
 | `prod` | Deployment | `ddl-auto: validate`, cookies marked secure, ECS structured logging, requires `ADMIN_EMAIL`/`ADMIN_PASSWORD` |
 
@@ -83,14 +83,14 @@ All settings live in `src/main/resources/application.yml` and are overridable vi
 | `DATABASE_URL` | `jdbc:postgresql://localhost:5432/hunting_fishing_store` | JDBC URL |
 | `DATABASE_USER` / `DATABASE_PASSWORD` | `postgres` / `postgres` | DB credentials |
 | `REDIS_HOST` / `REDIS_PORT` | `localhost` / `6379` | Redis connection |
-| `JWT_SECRET_KEY` | dev secret (dev profile) | JWT signing key |
+| `JWT_SECRET_KEY` | committed dev throwaway (dev profile) | JWT signing key; `prod` requires an explicit value of 32+ characters |
 | `JWT_ACCESS_EXPIRATION` | `15m` | Access-token lifetime |
 | `JWT_REFRESH_EXPIRATION_SECONDS` | `604800` | Refresh-token lifetime (seconds) |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Allowed frontend origins |
 | `RATE_LIMIT_MAX_ATTEMPTS` / `RATE_LIMIT_WINDOW_SECONDS` | `5` / `900` | Login rate limiting |
 | `SHIPPING_FREE_THRESHOLD` / `SHIPPING_FEE` | `75` / `4.95` | Free-shipping threshold and fee |
 | `PAYMENT_GATEWAY` | `stub` | Payment gateway implementation |
-| `PAYMENT_WEBHOOK_SECRET` | `local-webhook-secret-change-me` | Webhook signature secret |
+| `PAYMENT_WEBHOOK_SECRET` | `local-webhook-secret-change-me` (dev placeholder) | Webhook signature secret |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | — | Fixed admin account (required in `prod`) |
 
 ## Common Pitfalls
