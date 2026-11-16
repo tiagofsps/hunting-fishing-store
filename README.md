@@ -131,6 +131,20 @@ The API starts on `http://localhost:8080`. Useful URLs:
 On an empty database the `dev` profile seeds a demo dataset: users, catalog and
 stock. See [Demo accounts](#demo-accounts).
 
+### Full stack in Docker
+
+Build the application image and run it next to PostgreSQL and Redis:
+
+```bash
+docker compose --profile full up --build
+```
+
+The API is then available on `http://localhost:8080`. The `app` service waits
+for both databases to report healthy and runs the `dev` profile, so the demo
+dataset is seeded on an empty database. Plain `docker compose up -d` still
+starts only the infrastructure, which is what the host-based workflow above
+expects.
+
 ### Demo accounts
 
 On a fresh `dev` database the seeder creates two fixed accounts with the generic
