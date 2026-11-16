@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;
@@ -21,6 +22,7 @@ import com.tiagofsps.hunting_fishing_store.BaseControllerTest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.request.ProductCreateRequest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.response.ProductResponse;
 import com.tiagofsps.hunting_fishing_store.catalog.service.ProductService;
+import com.tiagofsps.hunting_fishing_store.common.dto.LocalizedTextResponse;
 import com.tiagofsps.hunting_fishing_store.common.exception.InvalidSortFieldException;
 import com.tiagofsps.hunting_fishing_store.common.exception.ProductAlreadyExistsException;
 import com.tiagofsps.hunting_fishing_store.common.exception.ProductNotFoundException;
@@ -32,21 +34,22 @@ class ProductControllerTest extends BaseControllerTest {
 
     @Test
     void shouldReturnAllProducts() throws Exception {
-        ProductResponse response = new ProductResponse(1L, "Fishing Rod", "fishing-rod", "Desc", false, null, 1L, 1L, List.of(), List.of());
-        when(productService.findAll(null, null, null, "createdAt", "desc", 0, 20))
+        ProductResponse response = new ProductResponse(1L, "Fishing Rod", "fishing-rod", "Desc", Map.of("en", new LocalizedTextResponse("Fishing Rod", "Desc")), false, null, 1L, 1L, List.of(), List.of());
+        when(productService.findAll(null, null, null, "createdAt", "desc", "en", 0, 20))
                 .thenReturn(new PageImpl<>(List.of(response)));
 
         mockMvc.perform(get("/api/v1/products").with(adminJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("Fishing Rod"))
+                .andExpect(jsonPath("$.content[0].translations.en.name").value("Fishing Rod"))
                 .andExpect(jsonPath("$.totalElements").value(1));
 
-        verify(productService).findAll(null, null, null, "createdAt", "desc", 0, 20);
+        verify(productService).findAll(null, null, null, "createdAt", "desc", "en", 0, 20);
     }
 
     @Test
     void shouldReturnInvalidSortFieldWhenSortNotWhitelisted() throws Exception {
-        when(productService.findAll(null, null, null, "description", "asc", 0, 20))
+        when(productService.findAll(null, null, null, "description", "asc", "en", 0, 20))
                 .thenThrow(new InvalidSortFieldException("description"));
 
         mockMvc.perform(get("/api/v1/products").param("sort", "description")
@@ -63,7 +66,7 @@ class ProductControllerTest extends BaseControllerTest {
 
     @Test
     void shouldReturnProductById() throws Exception {
-        ProductResponse response = new ProductResponse(1L, "Fishing Rod", "fishing-rod", "Desc", false, null, 1L, 1L, List.of(), List.of());
+        ProductResponse response = new ProductResponse(1L, "Fishing Rod", "fishing-rod", "Desc", Map.of("en", new LocalizedTextResponse("Fishing Rod", "Desc")), false, null, 1L, 1L, List.of(), List.of());
         when(productService.findById(1L)).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/products/1").with(adminJwt()))
@@ -76,7 +79,7 @@ class ProductControllerTest extends BaseControllerTest {
 
     @Test
     void shouldCreateProduct() throws Exception {
-        ProductResponse response = new ProductResponse(1L, "Fishing Rod", "fishing-rod", "Desc", false, null, 1L, 1L, List.of(), List.of());
+        ProductResponse response = new ProductResponse(1L, "Fishing Rod", "fishing-rod", "Desc", Map.of("en", new LocalizedTextResponse("Fishing Rod", "Desc")), false, null, 1L, 1L, List.of(), List.of());
         when(productService.create(any(ProductCreateRequest.class))).thenReturn(response);
 
         String request = """
@@ -97,7 +100,7 @@ class ProductControllerTest extends BaseControllerTest {
 
     @Test
     void shouldUpdateProduct() throws Exception {
-        ProductResponse response = new ProductResponse(1L, "Fishing Rod Updated", "fishing-rod-updated", "New Desc", false, null, 1L, 1L, List.of(), List.of());
+        ProductResponse response = new ProductResponse(1L, "Fishing Rod Updated", "fishing-rod-updated", "New Desc", Map.of("en", new LocalizedTextResponse("Fishing Rod Updated", "New Desc")), false, null, 1L, 1L, List.of(), List.of());
         when(productService.update(any(Long.class), any(ProductCreateRequest.class))).thenReturn(response);
 
         String request = """

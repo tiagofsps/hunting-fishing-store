@@ -1,6 +1,7 @@
 package com.tiagofsps.hunting_fishing_store.catalog.entity;
 
 import com.tiagofsps.hunting_fishing_store.common.BaseEntity;
+import org.hibernate.annotations.BatchSize;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -32,5 +33,9 @@ public class Category extends BaseEntity {
 
     @OneToMany(mappedBy = "parentCategory", cascade = CascadeType.ALL)
     private List<Category> subCategories = new ArrayList<>();
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
+    private List<CategoryTranslation> translations = new ArrayList<>();
 
 }

@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -22,6 +23,7 @@ import com.tiagofsps.hunting_fishing_store.BaseControllerTest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.request.CategoryCreateRequest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.response.CategoryResponse;
 import com.tiagofsps.hunting_fishing_store.catalog.service.CategoryService;
+import com.tiagofsps.hunting_fishing_store.common.dto.LocalizedTextResponse;
 import com.tiagofsps.hunting_fishing_store.common.exception.CategoryAlreadyExistsException;
 import com.tiagofsps.hunting_fishing_store.common.exception.CategoryNotFoundException;
 
@@ -32,12 +34,13 @@ class CategoryControllerTest extends BaseControllerTest {
 
     @Test
     void shouldReturnAllCategories() throws Exception {
-        CategoryResponse response = new CategoryResponse(1L, "Fishing", "fishing", "Desc", null, 0L);
+        CategoryResponse response = new CategoryResponse(1L, "Fishing", "fishing", "Desc", Map.of("en", new LocalizedTextResponse("Fishing", "Desc"), "pt", new LocalizedTextResponse("Pesca", "Desc")), null, 0L);
         when(categoryService.findAll()).thenReturn(List.of(response));
 
         mockMvc.perform(get("/api/v1/categories").with(adminJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Fishing"))
+                .andExpect(jsonPath("$[0].translations.pt.name").value("Pesca"))
                 .andExpect(jsonPath("$[0].slug").value("fishing"));
 
         verify(categoryService).findAll();
@@ -45,25 +48,30 @@ class CategoryControllerTest extends BaseControllerTest {
 
     @Test
     void shouldReturnCategoryById() throws Exception {
-        CategoryResponse response = new CategoryResponse(1L, "Fishing", "fishing", "Desc", null, 0L);
+        CategoryResponse response = new CategoryResponse(1L, "Fishing", "fishing", "Desc", Map.of("en", new LocalizedTextResponse("Fishing", "Desc"), "pt", new LocalizedTextResponse("Pesca", "Desc")), null, 0L);
         when(categoryService.findById(1L)).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/categories/1").with(adminJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("Fishing"));
+                .andExpect(jsonPath("$.name").value("Fishing"))
+                .andExpect(jsonPath("$.translations.pt.name").value("Pesca"));
 
         verify(categoryService).findById(1L);
     }
 
     @Test
     void shouldCreateCategory() throws Exception {
-        CategoryResponse response = new CategoryResponse(1L, "Fishing", "fishing", "Desc", null, 0L);
+        CategoryResponse response = new CategoryResponse(1L, "Fishing", "fishing", "Desc", Map.of("en", new LocalizedTextResponse("Fishing", "Desc"), "pt", new LocalizedTextResponse("Pesca", "Desc")), null, 0L);
         when(categoryService.create(any(CategoryCreateRequest.class))).thenReturn(response);
 
         String request = """
                 {
                     "name": "Fishing",
+                    "translations": {
+                        "en": {"name": "Fishing", "description": "Desc"},
+                        "pt": {"name": "Pesca", "description": "Desc"}
+                    },
                     "slug": "fishing",
                     "description": "Desc"
                 }
@@ -73,17 +81,22 @@ class CategoryControllerTest extends BaseControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("Fishing"));
+                .andExpect(jsonPath("$.name").value("Fishing"))
+                .andExpect(jsonPath("$.translations.pt.name").value("Pesca"));
     }
 
     @Test
     void shouldUpdateCategory() throws Exception {
-        CategoryResponse response = new CategoryResponse(1L, "Fishing Updated", "fishing-updated", "New Desc", null, 0L);
+        CategoryResponse response = new CategoryResponse(1L, "Fishing Updated", "fishing-updated", "New Desc", Map.of("en", new LocalizedTextResponse("Fishing Updated", "New Desc"), "pt", new LocalizedTextResponse("Pesca Atualizada", "New Desc")), null, 0L);
         when(categoryService.update(any(Long.class), any(CategoryCreateRequest.class))).thenReturn(response);
 
         String request = """
                 {
                     "name": "Fishing Updated",
+                    "translations": {
+                        "en": {"name": "Fishing Updated", "description": "New Desc"},
+                        "pt": {"name": "Pesca Atualizada", "description": "New Desc"}
+                    },
                     "slug": "fishing-updated",
                     "description": "New Desc"
                 }
@@ -93,7 +106,8 @@ class CategoryControllerTest extends BaseControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Fishing Updated"));
+                .andExpect(jsonPath("$.name").value("Fishing Updated"))
+                .andExpect(jsonPath("$.translations.pt.name").value("Pesca Atualizada"));
     }
 
     @Test

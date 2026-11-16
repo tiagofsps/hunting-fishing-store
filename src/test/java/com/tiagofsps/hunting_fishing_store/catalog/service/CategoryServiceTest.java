@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -14,11 +15,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.ArgumentCaptor;
 
 import com.tiagofsps.hunting_fishing_store.catalog.dto.request.CategoryCreateRequest;
+import com.tiagofsps.hunting_fishing_store.catalog.dto.request.CategoryTranslationRequest;
 import com.tiagofsps.hunting_fishing_store.catalog.dto.response.CategoryResponse;
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Category;
+import com.tiagofsps.hunting_fishing_store.catalog.entity.CategoryTranslation;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.CategoryRepository;
 import com.tiagofsps.hunting_fishing_store.catalog.repository.ProductRepository;
 import com.tiagofsps.hunting_fishing_store.common.exception.CategoryAlreadyExistsException;
@@ -45,7 +47,23 @@ class CategoryServiceTest {
         category.setName("Fishing");
         category.setSlug("fishing");
         category.setDescription("Fishing gear");
+        category.getTranslations().add(translation("en", "Fishing", "Fishing gear"));
+        category.getTranslations().add(translation("pt", "Pesca", "Equipamento de pesca"));
         lenient().when(productRepository.countProductsByCategory()).thenReturn(List.of());
+    }
+
+    private CategoryTranslation translation(String locale, String name, String description) {
+        CategoryTranslation translation = new CategoryTranslation();
+        translation.setLocale(locale);
+        translation.setName(name);
+        translation.setDescription(description);
+        return translation;
+    }
+
+    private Map<String, CategoryTranslationRequest> translations(String enName, String ptName) {
+        return Map.of(
+                "en", new CategoryTranslationRequest(enName, "English description"),
+                "pt", new CategoryTranslationRequest(ptName, "Portuguese description"));
     }
 
     @Test
@@ -57,6 +75,7 @@ class CategoryServiceTest {
 
         assertEquals(1L, response.id());
         assertEquals("Fishing", response.name());
+        assertEquals("Pesca", response.translations().get("pt").name());
         verify(categoryRepository).findById(1L);
     }
 
@@ -78,6 +97,7 @@ class CategoryServiceTest {
 
         assertEquals(1, result.size());
         assertEquals("Fishing", result.getFirst().name());
+        assertEquals("Pesca", result.getFirst().translations().get("pt").name());
         verify(categoryRepository).findAll();
     }
 
@@ -104,23 +124,58 @@ class CategoryServiceTest {
     }
 
     @Test
-    @DisplayName("Should create category")
+    @DisplayName("Should create category with English and Portuguese translations")
     void shouldCreateCategory() {
-        CategoryCreateRequest request = new CategoryCreateRequest("Fishing", "fishing", "Fishing gear", null);
+        CategoryCreateRequest request = new CategoryCreateRequest(
+                "Fishing", "fishing", "Fishing gear", translations("Fishing", "Pesca"), null);
         when(categoryRepository.existsBySlug("fishing")).thenReturn(false);
-        when(categoryRepository.save(any(Category.class))).thenReturn(category);
+        when(categoryRepository.save(any(Category.class))).thenAnswer(i -> i.getArgument(0));
 
         CategoryResponse response = categoryService.create(request);
 
         assertEquals("Fishing", response.name());
+        assertEquals("Pesca", response.translations().get("pt").name());
+        assertEquals("Fishing", response.translations().get("en").name());
         verify(categoryRepository).existsBySlug("fishing");
         verify(categoryRepository).save(any(Category.class));
     }
 
     @Test
+    @DisplayName("Should fall back to canonical fields when translations are omitted")
+    void shouldFallBackToCanonicalWhenTranslationsOmitted() {
+        CategoryCreateRequest request = new CategoryCreateRequest(
+                "Fishing", "fishing", "Fishing gear", null, null);
+        when(categoryRepository.existsBySlug("fishing")).thenReturn(false);
+        when(categoryRepository.save(any(Category.class))).thenAnswer(i -> i.getArgument(0));
+
+        CategoryResponse response = categoryService.create(request);
+
+        assertEquals("Fishing", response.translations().get("en").name());
+        assertNull(response.translations().get("pt"));
+    }
+
+    @Test
+    @DisplayName("Should ignore unsupported locales")
+    void shouldIgnoreUnsupportedLocales() {
+        CategoryCreateRequest request = new CategoryCreateRequest(
+                "Fishing", "fishing", "Fishing gear",
+                Map.of(
+                        "en", new CategoryTranslationRequest("Fishing", "English description"),
+                        "fr", new CategoryTranslationRequest("Pêche", "Description française")),
+                null);
+        when(categoryRepository.existsBySlug("fishing")).thenReturn(false);
+        when(categoryRepository.save(any(Category.class))).thenAnswer(i -> i.getArgument(0));
+
+        CategoryResponse response = categoryService.create(request);
+
+        assertNull(response.translations().get("fr"));
+    }
+
+    @Test
     @DisplayName("Should throw exception when creating duplicated slug")
     void shouldThrowWhenCreatingDuplicatedSlug() {
-        CategoryCreateRequest request = new CategoryCreateRequest("Fishing", "fishing", "Desc", null);
+        CategoryCreateRequest request = new CategoryCreateRequest(
+                "Fishing", "fishing", "Desc", null, null);
         when(categoryRepository.existsBySlug("fishing")).thenReturn(true);
 
         assertThrows(CategoryAlreadyExistsException.class, () -> categoryService.create(request));
@@ -132,9 +187,10 @@ class CategoryServiceTest {
     void shouldCreateSubcategory() {
         Category parent = new Category();
         parent.setId(1L);
-        
-        CategoryCreateRequest request = new CategoryCreateRequest("Rods", "rods", "Fishing rods", 1L);
-        
+
+        CategoryCreateRequest request = new CategoryCreateRequest(
+                "Rods", "rods", "Fishing rods", translations("Rods", "Caniços"), 1L);
+
         when(categoryRepository.existsBySlug("rods")).thenReturn(false);
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(parent));
         when(categoryRepository.save(any(Category.class))).thenAnswer(i -> i.getArgument(0));
@@ -142,14 +198,16 @@ class CategoryServiceTest {
         CategoryResponse response = categoryService.create(request);
 
         assertEquals("Rods", response.name());
+        assertEquals("Caniços", response.translations().get("pt").name());
         assertEquals(1L, response.parentCategoryId());
     }
 
     @Test
     @DisplayName("Should update existing category")
     void shouldUpdateCategory() {
-        CategoryCreateRequest request = new CategoryCreateRequest("Updated", "updated", "New desc", null);
-        
+        CategoryCreateRequest request = new CategoryCreateRequest(
+                "Updated", "updated", "New desc", translations("Updated", "Atualizado"), null);
+
         when(categoryRepository.existsBySlugAndIdNot("updated", 1L)).thenReturn(false);
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
         when(categoryRepository.save(any())).thenAnswer(i -> i.getArgument(0));
@@ -158,12 +216,14 @@ class CategoryServiceTest {
 
         assertEquals("Updated", response.name());
         assertEquals("updated", response.slug());
+        assertEquals("Atualizado", response.translations().get("pt").name());
     }
 
     @Test
     @DisplayName("Should throw exception when updating non-existent category")
     void shouldThrowWhenUpdatingNonExistent() {
-        CategoryCreateRequest request = new CategoryCreateRequest("Updated", "updated", "New desc", null);
+        CategoryCreateRequest request = new CategoryCreateRequest(
+                "Updated", "updated", "New desc", null, null);
         when(categoryRepository.existsBySlugAndIdNot("updated", 1L)).thenReturn(false);
         when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
 

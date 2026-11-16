@@ -24,7 +24,7 @@ class FlywayMigrationTest extends AbstractContainerBaseTest {
     @Test
     void flywayAppliedBaselineAndHibernateValidates() {
         MigrationInfo current = flyway.info().current();
-        assertEquals("5", current.getVersion().getVersion());
+        assertEquals("7", current.getVersion().getVersion());
         assertEquals(org.flywaydb.core.api.MigrationState.SUCCESS, current.getState());
     }
 }

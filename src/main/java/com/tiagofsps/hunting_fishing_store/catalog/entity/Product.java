@@ -1,6 +1,7 @@
 package com.tiagofsps.hunting_fishing_store.catalog.entity;
 
 import com.tiagofsps.hunting_fishing_store.common.BaseEntity;
+import org.hibernate.annotations.BatchSize;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -45,5 +46,9 @@ public class Product extends BaseEntity {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
+    private List<ProductTranslation> translations = new ArrayList<>();
 
 }

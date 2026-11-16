@@ -35,8 +35,9 @@ public class ProductController {
             @RequestParam(defaultValue = "desc") String direction,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long brandId,
-            @RequestParam(required = false) String q) {
-        return productService.findAll(categoryId, brandId, q, sort, direction, page, size);
+            @RequestParam(required = false) String q,
+            @RequestHeader(value = "Accept-Language", defaultValue = "en") String acceptLanguage) {
+        return productService.findAll(categoryId, brandId, q, sort, direction, acceptLanguage, page, size);
     }
 
     @GetMapping("/{id}")

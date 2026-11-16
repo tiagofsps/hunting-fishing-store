@@ -27,7 +27,11 @@ class CategoryIntegrationTest extends BaseIntegrationTest {
                 {
                     "name": "Fishing",
                     "slug": "fishing",
-                    "description": "Fishing gear"
+                    "description": "Fishing gear",
+                    "translations": {
+                        "en": {"name": "Fishing", "description": "Fishing gear"},
+                        "pt": {"name": "Pesca", "description": "Equipamento de pesca"}
+                    }
                 }
                 """;
 
@@ -38,6 +42,7 @@ class CategoryIntegrationTest extends BaseIntegrationTest {
                         .content(request))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Fishing"))
+                .andExpect(jsonPath("$.translations.pt.name").value("Pesca"))
                 .andExpect(jsonPath("$.slug").value("fishing"));
     }
 
@@ -52,6 +57,10 @@ class CategoryIntegrationTest extends BaseIntegrationTest {
                 {
                     "name": "Rods",
                     "slug": "rods",
+                    "translations": {
+                        "en": {"name": "Rods"},
+                        "pt": {"name": "Caniços"}
+                    },
                     "parentCategoryId": %d
                 }
                 """.formatted(savedParent.getId());
@@ -63,6 +72,7 @@ class CategoryIntegrationTest extends BaseIntegrationTest {
                         .content(request))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Rods"))
+                .andExpect(jsonPath("$.translations.pt.name").value("Caniços"))
                 .andExpect(jsonPath("$.parentCategoryId").value(savedParent.getId()));
     }
 }

@@ -6,12 +6,16 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.domain.Specification;
 
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import com.tiagofsps.hunting_fishing_store.catalog.entity.Product;
+import com.tiagofsps.hunting_fishing_store.catalog.entity.ProductTranslation;
 
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 
@@ -39,7 +43,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
    * {@code function lower(bytea) does not exist}. A Criteria predicate is only
    * ever bound with its real Java type, so absent filters are safe.
    */
-  static Specification<Product> search(Long categoryId, Long brandId, String query) {
+  static Specification<Product> search(Long categoryId, Long brandId, String query, String locale) {
     return (root, criteriaQuery, criteriaBuilder) -> {
       List<Predicate> predicates = new ArrayList<>();
 
@@ -50,12 +54,21 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
         predicates.add(criteriaBuilder.equal(root.get("brand").get("id"), brandId));
       }
       if (query != null && !query.isBlank()) {
+        Join<Product, ProductTranslation> translation =
+            root.join("translations", JoinType.LEFT);
+        translation.on(criteriaBuilder.equal(translation.get("locale"), locale));
+
+        Expression<String> localizedName =
+            criteriaBuilder.coalesce(translation.<String>get("name"), root.<String>get("name"));
+        Expression<String> localizedDescription =
+            criteriaBuilder.coalesce(translation.<String>get("description"), root.<String>get("description"));
+
         String pattern = "%" + query.toLowerCase() + "%";
         predicates.add(criteriaBuilder.or(
-            criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), pattern),
+            criteriaBuilder.like(criteriaBuilder.lower(localizedName), pattern),
             criteriaBuilder.and(
-                criteriaBuilder.isNotNull(root.get("description")),
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), pattern))));
+                criteriaBuilder.isNotNull(localizedDescription),
+                criteriaBuilder.like(criteriaBuilder.lower(localizedDescription), pattern))));
       }
 
       return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

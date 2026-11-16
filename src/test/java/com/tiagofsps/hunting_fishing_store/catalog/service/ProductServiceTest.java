@@ -90,6 +90,7 @@ class ProductServiceTest {
 
         assertEquals(1L, response.id());
         assertEquals("Fishing Rod", response.name());
+        assertEquals("Fishing Rod", response.translations().get("en").name());
         verify(productRepository).findById(1L);
     }
 
@@ -108,7 +109,7 @@ class ProductServiceTest {
         when(productRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(product)));
 
-        Page<ProductResponse> result = productService.findAll(null, null, null, "createdAt", "desc", 0, 20);
+        Page<ProductResponse> result = productService.findAll(null, null, null, "createdAt", "desc", "en", 0, 20);
 
         assertEquals(1, result.getTotalElements());
         assertEquals("Fishing Rod", result.getContent().getFirst().name());
@@ -121,7 +122,7 @@ class ProductServiceTest {
         when(productRepository.findAll(any(Specification.class), eq(expected)))
                 .thenReturn(new PageImpl<>(List.of(product)));
 
-        productService.findAll(2L, 3L, "rod", "name", "asc", 1, 50);
+        productService.findAll(2L, 3L, "rod", "name", "asc", "en", 1, 50);
 
         ArgumentCaptor<PageRequest> pageableCaptor = ArgumentCaptor.forClass(PageRequest.class);
         verify(productRepository).findAll(any(Specification.class), pageableCaptor.capture());
@@ -134,7 +135,7 @@ class ProductServiceTest {
     @DisplayName("Should reject a sort field outside the whitelist")
     void shouldRejectInvalidSortField() {
         assertThrows(InvalidSortFieldException.class,
-                () -> productService.findAll(null, null, null, "price", "asc", 0, 20));
+                () -> productService.findAll(null, null, null, "price", "asc", "en", 0, 20));
         verify(productRepository, never()).findAll(any(Specification.class), any(Pageable.class));
     }
 
@@ -142,7 +143,7 @@ class ProductServiceTest {
     @DisplayName("Should reject an invalid sort direction")
     void shouldRejectInvalidSortDirection() {
         assertThrows(InvalidSortFieldException.class,
-                () -> productService.findAll(null, null, null, "name", "sideways", 0, 20));
+                () -> productService.findAll(null, null, null, "name", "sideways", "en", 0, 20));
         verify(productRepository, never()).findAll(any(Specification.class), any(Pageable.class));
     }
 
@@ -150,7 +151,7 @@ class ProductServiceTest {
     @DisplayName("Should create product with items")
     void shouldCreateProductWithItems() {
         ProductItemRequest itemReq = new ProductItemRequest("SKU001", new BigDecimal("100.00"), 10, 0.5, true, null);
-        ProductCreateRequest request = new ProductCreateRequest("Fishing Rod", "fishing-rod", "Desc", false, null, 1L, 1L, List.of(itemReq), null);
+        ProductCreateRequest request = new ProductCreateRequest("Fishing Rod", "fishing-rod", "Desc", null, false, null, 1L, 1L, List.of(itemReq), null);
 
         when(productRepository.existsBySlug("fishing-rod")).thenReturn(false);
         when(brandRepository.findById(1L)).thenReturn(Optional.of(brand));
@@ -171,7 +172,7 @@ class ProductServiceTest {
 @Test
     @DisplayName("Should throw when creating duplicated slug")
     void shouldThrowWhenCreatingDuplicatedSlug() {
-        ProductCreateRequest request = new ProductCreateRequest("Fishing Rod", "fishing-rod", "Desc", false, null, 1L, 1L, List.of(), null);
+        ProductCreateRequest request = new ProductCreateRequest("Fishing Rod", "fishing-rod", "Desc", null, false, null, 1L, 1L, List.of(), null);
         when(productRepository.existsBySlug("fishing-rod")).thenReturn(true);
 
         assertThrows(ProductAlreadyExistsException.class, () -> productService.create(request));
@@ -180,7 +181,7 @@ class ProductServiceTest {
     @Test
     @DisplayName("Should throw when requiresLicense is true and licenseType is null")
     void shouldThrowWhenRequiresLicenseWithoutLicenseType() {
-        ProductCreateRequest request = new ProductCreateRequest("Fishing Rod", "fishing-rod", "Desc", true, null, 1L, 1L, List.of(), null);
+        ProductCreateRequest request = new ProductCreateRequest("Fishing Rod", "fishing-rod", "Desc", null, true, null, 1L, 1L, List.of(), null);
 
         assertThrows(LicenseTypeRequiredException.class, () -> productService.create(request));
 
@@ -191,7 +192,7 @@ class ProductServiceTest {
     @DisplayName("Should map licenseType through create")
     void shouldCreateProductWithLicenseType() {
         ProductItemRequest itemReq = new ProductItemRequest("SKU001", new BigDecimal("100.00"), 10, 0.5, true, null);
-        ProductCreateRequest request = new ProductCreateRequest("Hunting Rifle", "hunting-rifle", "Desc", true, LicenseType.HUNTING, 1L, 1L, List.of(itemReq), null);
+        ProductCreateRequest request = new ProductCreateRequest("Hunting Rifle", "hunting-rifle", "Desc", null, true, LicenseType.HUNTING, 1L, 1L, List.of(itemReq), null);
 
         when(productRepository.existsBySlug("hunting-rifle")).thenReturn(false);
         when(brandRepository.findById(1L)).thenReturn(Optional.of(brand));
@@ -206,7 +207,7 @@ class ProductServiceTest {
     @Test
     @DisplayName("Should throw when brand not found during create")
     void shouldThrowWhenBrandNotFound() {
-        ProductCreateRequest request = new ProductCreateRequest("Fishing Rod", "fishing-rod", "Desc", false, null, 1L, 1L, List.of(), null);
+        ProductCreateRequest request = new ProductCreateRequest("Fishing Rod", "fishing-rod", "Desc", null, false, null, 1L, 1L, List.of(), null);
         when(productRepository.existsBySlug("fishing-rod")).thenReturn(false);
         when(brandRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -216,7 +217,7 @@ class ProductServiceTest {
     @Test
     @DisplayName("Should update existing product")
     void shouldUpdateProduct() {
-        ProductCreateRequest request = new ProductCreateRequest("Updated", "updated", "Desc", false, null, 1L, 1L, List.of(), null);
+        ProductCreateRequest request = new ProductCreateRequest("Updated", "updated", "Desc", null, false, null, 1L, 1L, List.of(), null);
         
         when(productRepository.existsBySlugAndIdNot("updated", 1L)).thenReturn(false);
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
