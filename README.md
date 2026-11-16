@@ -398,6 +398,8 @@ classes and conventions.
 - [Testing Guide](docs/testing.md) — test tiers, base classes and conventions.
 - [Architecture](docs/architecture/README.md) — domain model, technology stack,
   design decisions and coding conventions.
+- [Changelog](CHANGELOG.md) — notable changes by release.
+- [Security Policy](SECURITY.md) — how to report a vulnerability privately.
 
 ## License / Usage
 
