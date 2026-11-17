@@ -166,12 +166,50 @@ The 20 additional demo users share the password `password123`.
 | Command | Effect |
 |---|---|
 | `make db-reset` | **Destructive:** drops and recreates the database |
-| `make db-seed` | Resets, then starts the app so Flyway + seeders run |
+| `make db-seed` | Resets, then starts the app so seeders run (the `dev` profile creates the schema with `ddl-auto: update`) |
 | `make db-setup` | Alias for `db-seed` |
 | `make db-shell` | Interactive `psql` session |
 
 Seeding only runs on an empty database in the `dev` profile, so a reset followed
 by `db-seed` reproduces a consistent dataset.
+
+### Try it with curl
+
+The seeded demo data makes the whole happy path runnable in under a minute. Each
+step below was executed against a locally running instance.
+
+```bash
+BASE=http://localhost:8080/api/v1
+
+# 1. Log in (refresh token is set as an HttpOnly cookie)
+TOKEN=$(curl -s -X POST $BASE/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@huntingfishing.com","password":"Password123!"}' \
+  | python3 -c 'import sys,json;print(json.load(sys.stdin)["accessToken"])')
+
+# 2. Read the demo profile (their id and shipping address id)
+curl -s -H "Authorization: Bearer $TOKEN" $BASE/auth/me
+```
+
+```bash
+# 3. Add a product to the cart (ids from steps 2 and the catalog)
+curl -s -X POST $BASE/carts/22/items \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"productItemId":24,"quantity":1}'
+
+# 4. Check out (201, order is PENDING, cart is emptied)
+curl -s -X POST $BASE/orders/checkout/22 \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"shippingAddressId":23,"billingAddressId":23}'
+
+# 5. Pay for it (201; the amount comes from the order, never the client)
+curl -s -X POST $BASE/payments \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"orderId":2,"paymentMethod":"MBWAY","mbwayPhone":"351912345678"}'
+```
+
+The ids in steps 3–5 come from the demo dataset; substitute the values returned
+in step 2 and by `GET /products`.
 
 ## Configuration
 
@@ -204,6 +242,8 @@ All settings are environment-driven; defaults keep local development working.
 
 Base path `/api/v1`. Interactive documentation: `/swagger-ui.html` (OpenAPI JSON
 at `/v3/api-docs`). `[ADMIN]` marks endpoints that require `ROLE_ADMIN`.
+
+![Swagger UI with the project metadata and the Authorize dialog](docs/images/swagger-ui.png)
 
 <details>
 <summary><strong>Authentication & users</strong></summary>
