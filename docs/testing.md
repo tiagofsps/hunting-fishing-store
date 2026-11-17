@@ -61,7 +61,7 @@ Extend `BaseIntegrationTest` and exercise the full stack — real services, repo
 ./mvnw test
 
 # Compile + run all tests (CI-style check)
-./mvnw clean package
+./mvnw clean verify
 
 # Compile only
 ./mvnw clean compile
@@ -69,7 +69,7 @@ Extend `BaseIntegrationTest` and exercise the full stack — real services, repo
 
 ### Without Docker
 
-The 36 container-backed test classes (repository, controller, and integration tiers, plus the security, Flyway, and context tests) require a working Docker daemon. Without one they fail with `Could not initialize class AbstractContainerBaseTest` — this is environmental, not a code failure. To run only the fast unit tests:
+The 37 container-backed test classes (repository, controller, and integration tiers, plus the security, Flyway, and context tests) require a working Docker daemon. Without one they fail with `Could not initialize class AbstractContainerBaseTest` — this is environmental, not a code failure. To run only the fast unit tests:
 
 ```bash
 ./mvnw test -Dtest='*ServiceTest,*UnitTest'
