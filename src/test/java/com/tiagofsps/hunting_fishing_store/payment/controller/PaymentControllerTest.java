@@ -54,7 +54,7 @@ class PaymentControllerTest extends BaseControllerTest {
 
     @Test
     void shouldUpdateStatus() throws Exception {
-        mockMvc.perform(patch("/api/v1/payments/1/status").with(userJwt())
+        mockMvc.perform(patch("/api/v1/payments/1/status").with(adminJwt())
                         .param("status", "COMPLETED"))
                 .andExpect(status().isOk());
     }

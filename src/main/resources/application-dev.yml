@@ -7,6 +7,11 @@ spring:
   data:
     redis:
       password:
+  flyway:
+    # Development keeps Hibernate's ddl-auto: update (see DD-007) and the dev
+    # database may predate the migrations, so Flyway stays out of the way here.
+    # `prod` and the test profile run the real migrations.
+    enabled: false
 
 app:
   jwt:

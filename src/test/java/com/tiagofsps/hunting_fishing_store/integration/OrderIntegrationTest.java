@@ -22,7 +22,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -58,6 +59,9 @@ class OrderIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     private User savedUser;
     private Address savedAddress;
@@ -119,7 +123,6 @@ class OrderIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    @Transactional
     void shouldCheckoutSuccessfully() throws Exception {
         String checkoutRequest = """
                 {
@@ -136,8 +139,13 @@ class OrderIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.totalAmount").value(200.0))
                 .andExpect(jsonPath("$.items.length()").value(1));
 
-        Cart cart = cartRepository.findByUserId(savedUser.getId()).orElseThrow();
-        assertTrue(cart.getItems().isEmpty());
+        Boolean cartEmptied = new TransactionTemplate(transactionManager).execute(status ->
+                cartRepository.findByUserId(savedUser.getId())
+                        .orElseThrow()
+                        .getItems()
+                        .isEmpty());
+
+        assertTrue(Boolean.TRUE.equals(cartEmptied));
         assertEquals(1, orderRepository.count());
     }
 }

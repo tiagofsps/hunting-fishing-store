@@ -65,7 +65,11 @@ Status: Accepted
 
 Reason: `prod` runs with `ddl-auto: validate` against versioned Flyway
 migrations, so schema changes are reviewed and reproducible. Development keeps
-`ddl-auto: update` for fast iteration.
+`ddl-auto: update` for fast iteration and therefore disables Flyway
+(`spring.flyway.enabled: false`), since a long-lived dev database created by
+Hibernate has no migration history. The `test` profile runs the real migrations
+before Hibernate, and `FlywayMigrationTest` asserts they still match the
+entities.
 
 ---
 

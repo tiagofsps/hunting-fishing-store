@@ -52,7 +52,9 @@ class ProductControllerTest extends BaseControllerTest {
         when(productService.findAll(null, null, null, "description", "asc", "en", 0, 20))
                 .thenThrow(new InvalidSortFieldException("description"));
 
-        mockMvc.perform(get("/api/v1/products").param("sort", "description")
+        mockMvc.perform(get("/api/v1/products")
+                        .param("sort", "description")
+                        .param("direction", "asc")
                         .with(adminJwt()))
                 .andExpect(status().isBadRequest());
     }

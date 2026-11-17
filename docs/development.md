@@ -16,9 +16,9 @@ The active profile defaults to `dev` and can be overridden with `SPRING_PROFILES
 
 | Profile | Purpose | Notable behavior |
 | --- | --- | --- |
-| `dev` (default) | Local development | SQL logging enabled, seeders run on an empty database, cookies not marked secure, committed throwaway JWT secret (overridable with `JWT_SECRET_KEY`) |
-| `test` | Automated tests | `ddl-auto: create-drop`, Testcontainers provide Postgres/Redis, rate limiting relaxed, cookies not marked secure |
-| `prod` | Deployment | `ddl-auto: validate`, cookies marked secure, ECS structured logging, requires `ADMIN_EMAIL`/`ADMIN_PASSWORD` |
+| `dev` (default) | Local development | SQL logging enabled, `ddl-auto: update` owns the schema (Flyway disabled), seeders run on an empty database, cookies not marked secure, committed throwaway JWT secret (overridable with `JWT_SECRET_KEY`) |
+| `test` | Automated tests | `ddl-auto: create-drop`, Testcontainers provide Postgres/Redis, Flyway runs the migrations first, rate limiting relaxed, cookies not marked secure |
+| `prod` | Deployment | Flyway applies the migrations then `ddl-auto: validate`, cookies marked secure, ECS structured logging, requires `JWT_SECRET_KEY` and `ADMIN_EMAIL`/`ADMIN_PASSWORD` |
 
 ## Running the App
 
@@ -52,7 +52,7 @@ The `make` targets wrap host `psql` and do not require Docker CLI access:
 | Command | Effect |
 | --- | --- |
 | `make db-reset` | **Destructive.** Drops and recreates the `hunting_fishing_store` database |
-| `make db-seed` | Runs `db-reset`, then starts the app so Flyway migrations and seeders run |
+| `make db-seed` | Runs `db-reset`, then starts the app so the schema is created and the seeders run |
 | `make db-setup` | Alias for `db-seed` |
 | `make db-shell` | Opens an interactive `psql` session |
 
@@ -60,7 +60,7 @@ The scripts source an optional `.env` file and honor `POSTGRES_HOST`, `POSTGRES_
 
 ### Schema and Seeding
 
-- **Flyway** applies the baseline schema from `src/main/resources/db/migration` (`V1__init.sql` through `V5__newsletter_subscription.sql`).
+- **Flyway** owns the schema outside development. It applies `src/main/resources/db/migration` (`V1__init.sql` through `V7__content_translations.sql`) and the `prod` profile then validates the entities against the migrated schema (`ddl-auto: validate`). The `dev` profile sets `spring.flyway.enabled: false` and lets Hibernate's `ddl-auto: update` create the schema, because a long-lived development database may predate the migrations (see DD-007).
 - **Seeders** run only in the `dev` profile and only when the database is empty (`UserSeeder` returns early if any user exists). They create:
   - A fixed admin: `admin@huntingfishing.com` / `Password123!` (ROLE_ADMIN, with shipping and billing addresses). Override with `ADMIN_EMAIL`/`ADMIN_PASSWORD`; in `prod` these are mandatory.
   - A fixed demo user: `user@huntingfishing.com` / `Password123!` (ROLE_USER, with demo hunting/fishing licenses).

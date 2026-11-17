@@ -72,10 +72,24 @@ class SecurityConfigTest extends BaseIntegrationTest {
 
     @Test
     void regularUserCannotWriteProducts() throws Exception {
+        // A valid body so the request reaches method security instead of being
+        // rejected earlier by bean validation (which would answer 400).
+        String request = """
+                {
+                    "name": "Forbidden Rod",
+                    "slug": "forbidden-rod",
+                    "description": "Should never be created",
+                    "requiresLicense": false,
+                    "brandId": 1,
+                    "categoryId": 1,
+                    "items": []
+                }
+                """;
+
         mockMvc.perform(post("/api/v1/products")
                         .with(userJwt())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
+                        .content(request))
                 .andExpect(status().isForbidden());
     }
 

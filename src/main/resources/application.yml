@@ -77,3 +77,8 @@ management:
     health:
       probes:
         enabled: true
+  health:
+    # Email is best-effort: a missing or unreachable SMTP server must not drag
+    # the whole application to DOWN (and, with it, the container healthcheck).
+    mail:
+      enabled: false

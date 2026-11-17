@@ -36,3 +36,18 @@ Initial release of the Hunting & Fishing Store backend.
   full-stack Docker Compose profile and a GitHub Actions CI workflow.
 - **Testing** — unit, repository, controller and integration tiers backed by
   Testcontainers (PostgreSQL + Redis).
+
+### Fixed
+
+- **Flyway never ran.** Only `flyway-core` was on the classpath, so Spring Boot's
+  Flyway autoconfiguration was absent and no `Flyway` bean existed; `prod` would
+  have started against an unmigrated database. Add `spring-boot-flyway`, keep
+  Flyway disabled in `dev` (Hibernate owns that schema) and verified that `prod`
+  applies `V1`–`V7` and then validates the entities.
+- **Health check reported DOWN without SMTP.** Spring Boot's mail health
+  indicator marked the application unhealthy when no mail server was reachable,
+  which also failed the container `HEALTHCHECK`. Disabled, since email is
+  best-effort.
+- **Seven pre-existing test failures** in the catalog, payment, security, order
+  and user tiers (stale assertions, a mock stub that never matched, an
+  HTTP round-trip wrapped in the test transaction).

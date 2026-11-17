@@ -57,8 +57,9 @@ class UserIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
-        // 2. Extract the ID from the response JSON
-        Integer userId = JsonPath.read(registerResponse, "$.id");
+        // 2. Extract the ID from the response JSON (register returns the user
+        //    nested under "user" together with the access token)
+        Integer userId = JsonPath.read(registerResponse, "$.user.id");
 
         String addressRequest = """
                 {
