@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
-## [1.0.0] - 2026-11-16
+## [1.0.0] - 2026-11-17
 
 Initial release of the Hunting & Fishing Store backend.
 
@@ -51,3 +51,5 @@ Initial release of the Hunting & Fishing Store backend.
 - **Seven pre-existing test failures** in the catalog, payment, security, order
   and user tiers (stale assertions, a mock stub that never matched, an
   HTTP round-trip wrapped in the test transaction).
+
+[1.0.0]: https://github.com/tiagofsps/hunting-fishing-store/releases/tag/v1.0.0
