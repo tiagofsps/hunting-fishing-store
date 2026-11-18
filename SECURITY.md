@@ -22,4 +22,5 @@ amount of time to investigate and fix the issue before any public disclosure.
   `ADMIN_EMAIL` and `ADMIN_PASSWORD` to be supplied explicitly.
 - The payment gateway is a stub. It deliberately simulates provider responses
   and does not talk to a live payment service provider.
-- The project is MIT licensed; see [LICENSE](LICENSE).
+- The project is MIT licensed; see [LICENSE](LICENSE). It is a personal
+training project, so pull requests are not expected.

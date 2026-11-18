@@ -9,10 +9,14 @@ A Spring Boot 4 / Java 21 backend for a hunting and fishing equipment store:
 catalog, cart, checkout, payments, coupons, promotions and newsletter — with a
 stateless JWT security model and support for regulated products.
 
-> **Training project.** Built to practise a production-shaped backend and
-> published as a portfolio piece under the MIT licence — see [License](#license).
-
 ## About this project
+
+This began as a store concept a friend wanted to open. I took it on as a learning
+vehicle — Spring Boot 4 on the backend, React 19 on the frontend — and it grew into
+a complete store: catalog, cart, checkout with licence verification, payments,
+order history and an admin console. The store never went to market, so the code is
+published as a portfolio piece rather than a product. It is MIT licensed and free
+to read or reuse; contributions are not expected.
 
 Hunting and fishing gear is not a plain e-commerce domain: some products are
 legally regulated and can only be sold to customers who prove they hold the
@@ -439,6 +443,24 @@ The container-backed tiers extend `AbstractContainerBaseTest`, which starts a
 PostgreSQL and a Redis container once per JVM and wires them via
 `@ServiceConnection`. See the [Testing Guide](docs/testing.md) for the base
 classes and conventions.
+
+## Tradeoffs and what I'd do differently
+
+- **Two schema owners.** `prod` runs Flyway with `ddl-auto: validate`, while `dev`
+  lets Hibernate own the schema so iteration stays fast (DD-007). It works, but
+  two sources of truth is a smell; I'd run Flyway everywhere and keep seed data in
+  migrations.
+- **Mail health as a liveness signal.** Spring Boot's mail indicator turned the
+  whole health check unhealthy when no SMTP server was reachable, so it is
+  disabled. A separate readiness group would express that better than turning it
+  off.
+- **A stub payment gateway.** Four payment methods are modelled and webhooks are
+  signature-verified and idempotent, but no real provider is wired in — there was
+  no merchant account to integrate. The `PaymentGateway` interface is the seam for
+  one.
+- **No end-to-end environment.** Testcontainers covers the persistence, controller
+  and integration tiers, but nothing exercises a deployed instance. I'd add a
+  smoke suite against a running stack before trusting it in production.
 
 ## Documentation
 
