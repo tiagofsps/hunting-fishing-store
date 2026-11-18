@@ -3,13 +3,14 @@
 ![CI](https://github.com/tiagofsps/hunting-fishing-store/actions/workflows/ci.yml/badge.svg)
 ![Java 21](https://img.shields.io/badge/Java-21-blue)
 ![Spring Boot 4.1](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F)
+![License: MIT](https://img.shields.io/badge/License-MIT-green)
 
 A Spring Boot 4 / Java 21 backend for a hunting and fishing equipment store:
 catalog, cart, checkout, payments, coupons, promotions and newsletter — with a
 stateless JWT security model and support for regulated products.
 
-> **Portfolio project.** This repository is published for review purposes only
-> and is **not open source** — see [License / Usage](#license--usage).
+> **Training project.** Built to practise a production-shaped backend and
+> published as a portfolio piece under the MIT licence — see [License](#license).
 
 ## About this project
 
@@ -34,8 +35,9 @@ The interesting parts, in rough order of complexity:
   (`en`, `pt`) with the canonical columns as a fallback; product search honours
   `Accept-Language`.
 
-**Scope:** this is the backend only. The storefront/admin SPA lives in a
-separate repository; the payment gateway is a stub, not a live PSP integration.
+**Scope:** this is the backend only. The storefront and admin SPA live in
+[hunting-fishing-store-web](https://github.com/tiagofsps/hunting-fishing-store-web);
+the payment gateway is a stub, not a live PSP integration.
 
 ## Feature highlights
 
@@ -448,9 +450,10 @@ classes and conventions.
 - [Changelog](CHANGELOG.md) — notable changes by release.
 - [Security Policy](SECURITY.md) — how to report a vulnerability privately.
 
-## License / Usage
+## License
 
-This repository is published for **portfolio and review purposes only** and is
-**not open source**. It is proprietary: all rights reserved. See [LICENSE](LICENSE)
-for the full notice. No permission is granted to use, copy, modify, or
-distribute the code without prior written permission from the copyright holder.
+[MIT](LICENSE) © 2026 Tiago Pires.
+
+You are free to use, copy, modify and distribute this code. It was written as a
+training and portfolio project, so treat it as a reference rather than a
+production system.

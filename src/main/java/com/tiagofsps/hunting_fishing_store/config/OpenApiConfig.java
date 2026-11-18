@@ -34,13 +34,13 @@ public class OpenApiConfig {
 
                                 Catalog reads are public. Authenticated requests use a JWT access token
                                 from `POST /api/v1/auth/login`; admin-only operations require the
-                                `ROLE_ADMIN` authority. This repository is a proprietary portfolio
-                                project, published for review only.""")
+                                `ROLE_ADMIN` authority. This is a training and portfolio project,
+                                published under the MIT licence.""")
                         .version("1.0.0")
                         .contact(new Contact()
                                 .name("Tiago Pires")
                                 .url("https://github.com/tiagofsps"))
-                        .license(new License().name("Proprietary - All Rights Reserved")))
+                        .license(new License().name("MIT License").url("https://opensource.org/licenses/MIT")))
                 .servers(List.of(
                         new Server().url("http://localhost:8080").description("Local development")))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_SCHEME))

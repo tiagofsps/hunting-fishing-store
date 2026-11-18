@@ -12,12 +12,12 @@
 	<artifactId>hunting-fishing-store</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Hunting &amp; Fishing Store</name>
-	<description>Proprietary e-commerce backend for hunting and fishing equipment</description>
+	<description>Spring Boot backend for a hunting and fishing equipment store</description>
 	<url>https://github.com/tiagofsps/hunting-fishing-store</url>
 	<licenses>
 		<license>
-			<name>Proprietary - All Rights Reserved</name>
-			<comments>Published for portfolio and review purposes only.</comments>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/MIT</url>
 		</license>
 	</licenses>
 	<developers>
